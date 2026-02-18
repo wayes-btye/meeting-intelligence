@@ -4,13 +4,13 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 from src.ingestion.storage import get_supabase_client
 
 
-class QueryType(str, Enum):
+class QueryType(StrEnum):
     """Classification of a user query."""
 
     STRUCTURED = "structured"

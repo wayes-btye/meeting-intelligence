@@ -3,17 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class ChunkingStrategy(str, Enum):
+class ChunkingStrategy(StrEnum):
     """Available chunking strategies for transcript ingestion."""
 
     NAIVE = "naive"
     SPEAKER_TURN = "speaker_turn"
 
 
-class RetrievalStrategy(str, Enum):
+class RetrievalStrategy(StrEnum):
     """Available retrieval strategies for querying."""
 
     SEMANTIC = "semantic"

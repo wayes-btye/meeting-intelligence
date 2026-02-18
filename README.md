@@ -102,7 +102,7 @@ cp .env.example .env
 # Add your API keys to .env
 
 # Install dependencies
-pip install -r requirements.txt
+pip install -e ".[dev]"
 
 # Database setup
 # Run the SQL migrations in supabase/migrations/ against your Supabase project

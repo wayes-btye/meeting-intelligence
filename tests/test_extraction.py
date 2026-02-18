@@ -7,9 +7,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.extraction.extractor import _parse_tool_response, extract_from_transcript
-from src.extraction.models import ExtractedItem
 from src.retrieval.router import QueryType, classify_query, format_structured_response
-
 
 # ---------------------------------------------------------------------------
 # Extraction tests
@@ -280,7 +278,7 @@ class TestExtractEndpoint:
         from src.api.main import app
 
         client = TestClient(app, raise_server_exceptions=False)
-        response = client.get("/api/meetings/00000000-0000-0000-0000-000000000000/extract")
+        response = client.post("/api/meetings/00000000-0000-0000-0000-000000000000/extract")
         # Without Supabase: 500; with Supabase and missing ID: 404
         assert response.status_code in [404, 500]
 

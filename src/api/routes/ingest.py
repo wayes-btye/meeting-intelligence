@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile
 
 from src.api.models import IngestResponse
 from src.ingestion.pipeline import ingest_transcript
@@ -12,6 +12,9 @@ from src.ingestion.storage import get_supabase_client
 from src.pipeline_config import ChunkingStrategy
 
 router = APIRouter()
+
+# 50 MB upload limit
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 
 @router.post("/api/ingest", response_model=IngestResponse)
@@ -21,10 +24,18 @@ async def ingest(
     chunking_strategy: Annotated[str, Form()] = "speaker_turn",
 ) -> IngestResponse:
     """Upload a transcript file and run the ingestion pipeline."""
+    # Enforce file size limit
+    raw = await file.read()
+    if len(raw) > MAX_UPLOAD_BYTES:
+        raise HTTPException(
+            status_code=413,
+            detail=f"File too large. Maximum size is {MAX_UPLOAD_BYTES // (1024 * 1024)} MB.",
+        )
+
     # Validate and convert to enum early
     strategy = ChunkingStrategy(chunking_strategy)
 
-    content = (await file.read()).decode("utf-8")
+    content = raw.decode("utf-8")
 
     # Determine format from file extension
     ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename else "txt"

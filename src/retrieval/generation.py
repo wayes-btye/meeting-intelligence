@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from anthropic import Anthropic
 
+from src.config import settings
+
 
 def generate_answer(question: str, context_chunks: list[dict]) -> dict:
     """Generate an answer using Claude with source attribution.
@@ -27,7 +29,7 @@ def generate_answer(question: str, context_chunks: list[dict]) -> dict:
 
     client = Anthropic()  # reads ANTHROPIC_API_KEY from env
     response = client.messages.create(
-        model="claude-sonnet-4-20250514",
+        model=settings.llm_model,
         max_tokens=1024,
         system=(
             "You are a meeting intelligence assistant. Answer questions based "

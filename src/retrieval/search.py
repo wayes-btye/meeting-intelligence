@@ -2,21 +2,10 @@
 
 from __future__ import annotations
 
-import os
-
 from openai import OpenAI
 
-from supabase import create_client
-
+from src.ingestion.storage import get_supabase_client
 from src.pipeline_config import RetrievalStrategy
-
-
-def get_supabase_client():
-    """Create and return a Supabase client from environment variables."""
-    return create_client(
-        os.getenv("SUPABASE_URL", ""),
-        os.getenv("SUPABASE_KEY", ""),
-    )
 
 
 def get_query_embedding(query: str, model: str = "text-embedding-3-small") -> list[float]:
@@ -52,8 +41,22 @@ def hybrid_search(
     match_count: int = 10,
     vector_weight: float = 0.7,
     text_weight: float = 0.3,
+    meeting_id: str | None = None,
 ) -> list[dict]:
-    """Combined vector + full-text search."""
+    """Combined vector + full-text search.
+
+    Args:
+        query: The search query text.
+        match_count: Maximum number of results to return.
+        vector_weight: Weight for semantic similarity score.
+        text_weight: Weight for keyword match score.
+        meeting_id: Optional meeting ID to filter results. Applied as a
+            Python-side post-filter since the Supabase RPC function may
+            not support this parameter.
+    """
+    # Fetch extra results when filtering so we still return enough after pruning
+    fetch_count = match_count * 3 if meeting_id else match_count
+
     embedding = get_query_embedding(query)
     client = get_supabase_client()
     result = client.rpc(
@@ -61,12 +64,19 @@ def hybrid_search(
         {
             "query_embedding": embedding,
             "query_text": query,
-            "match_count": match_count,
+            "match_count": fetch_count,
             "vector_weight": vector_weight,
             "text_weight": text_weight,
         },
     ).execute()
-    return result.data
+
+    data: list[dict] = result.data
+
+    # Python-side meeting_id filter (the SQL function may not support it)
+    if meeting_id:
+        data = [r for r in data if r.get("meeting_id") == meeting_id]
+
+    return data[:match_count]
 
 
 def search(
@@ -91,4 +101,4 @@ def search(
 
     if retrieval_strategy is RetrievalStrategy.SEMANTIC:
         return semantic_search(query, match_count=match_count, meeting_id=meeting_id)
-    return hybrid_search(query, match_count=match_count)
+    return hybrid_search(query, match_count=match_count, meeting_id=meeting_id)

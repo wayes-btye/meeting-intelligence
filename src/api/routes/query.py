@@ -1,4 +1,4 @@
-"""Query endpoint: retrieve context and generate answers."""
+"""Query endpoint: retrieve context and generate answers, with structured routing."""
 
 from __future__ import annotations
 
@@ -6,22 +6,46 @@ from fastapi import APIRouter
 
 from src.api.models import QueryRequest, QueryResponse
 from src.retrieval.generation import generate_answer
-from src.retrieval.search import hybrid_search, semantic_search
+from src.retrieval.router import (
+    QueryType,
+    classify_query,
+    format_structured_response,
+    lookup_extracted_items,
+)
+from src.retrieval.search import search
 
 router = APIRouter()
 
 
 @router.post("/api/query", response_model=QueryResponse)
 async def query(request: QueryRequest) -> QueryResponse:
-    """Answer a question using RAG over meeting transcripts."""
-    # Retrieve relevant chunks
-    if request.strategy == "semantic":
-        chunks = semantic_search(
-            request.question,
+    """Answer a question using structured lookup or RAG over meeting transcripts.
+
+    The query router classifies the question:
+    - Structured queries (action items, decisions, topics) -> direct DB lookup
+    - Open-ended queries -> RAG pipeline (embed, search, generate)
+    """
+    routed = classify_query(request.question)
+
+    if routed.query_type is QueryType.STRUCTURED:
+        items = lookup_extracted_items(
             meeting_id=request.meeting_id,
+            item_type=routed.item_type,
         )
-    else:
-        chunks = hybrid_search(request.question)
+        answer = format_structured_response(items, routed.item_type)
+        return QueryResponse(
+            answer=answer,
+            sources=[],
+            model=None,
+            usage=None,
+        )
+
+    # Open-ended: use existing RAG pipeline
+    chunks = search(
+        request.question,
+        retrieval_strategy=request.strategy,
+        meeting_id=request.meeting_id,
+    )
 
     if not chunks:
         return QueryResponse(

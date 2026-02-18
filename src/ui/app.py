@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import streamlit as st
 
+from src.pipeline_config import ChunkingStrategy, RetrievalStrategy
 from src.ui.api_client import (
     check_health,
     get_meeting_detail,
@@ -22,7 +23,7 @@ from src.ui.api_client import (
 st.set_page_config(page_title="Meeting Intelligence", layout="wide")
 
 # ---------------------------------------------------------------------------
-# Sidebar -- navigation + API status
+# Sidebar -- navigation + strategy selectors + API status
 # ---------------------------------------------------------------------------
 with st.sidebar:
     st.title("Meeting Intelligence")
@@ -32,6 +33,23 @@ with st.sidebar:
         "Navigate",
         ["Upload Meeting", "Ask Questions", "Meetings"],
         label_visibility="collapsed",
+    )
+
+    st.markdown("---")
+    st.subheader("Pipeline Strategies")
+
+    sidebar_chunking: str = st.selectbox(
+        "Chunking strategy",
+        options=[s.value for s in ChunkingStrategy],
+        format_func=lambda x: "Speaker-turn" if x == "speaker_turn" else "Naive",
+        key="sidebar_chunking",
+    )
+
+    sidebar_retrieval: str = st.selectbox(
+        "Retrieval strategy",
+        options=[s.value for s in RetrievalStrategy],
+        format_func=lambda x: x.capitalize(),
+        key="sidebar_retrieval",
     )
 
     st.markdown("---")
@@ -57,12 +75,6 @@ if page == "Upload Meeting":
 
     title = st.text_input("Meeting title", placeholder="e.g. Sprint Planning 2026-02-18")
 
-    chunking_strategy = st.selectbox(
-        "Chunking strategy",
-        options=["speaker_turn", "naive"],
-        format_func=lambda x: "Speaker-turn" if x == "speaker_turn" else "Naive",
-    )
-
     # Inform users about audio transcription
     if uploaded_file is not None and uploaded_file.name.split(".")[-1] in {
         "mp3",
@@ -83,7 +95,7 @@ if page == "Upload Meeting":
                     file_content=uploaded_file.getvalue(),
                     filename=uploaded_file.name,
                     title=title,
-                    chunking_strategy=str(chunking_strategy),
+                    chunking_strategy=sidebar_chunking,
                 )
             if result:
                 st.success("Meeting uploaded successfully.")
@@ -107,23 +119,14 @@ elif page == "Ask Questions":
         "Your question", placeholder="What were the action items from the last standup?"
     )
 
-    col1, col2 = st.columns(2)
-    with col1:
-        meeting_options: dict[str, str | None] = {"All meetings": None}
-        for m in meetings_list:
-            label = m.get("title", m.get("id", "Unknown"))
-            meeting_options[label] = m.get("id")
-        selected_meeting_label = st.selectbox(
-            "Filter by meeting (optional)", options=list(meeting_options.keys())
-        )
-        selected_meeting_id = meeting_options[selected_meeting_label]
-
-    with col2:
-        strategy = st.selectbox(
-            "Retrieval strategy (optional)",
-            options=["hybrid", "semantic"],
-            format_func=lambda x: x.capitalize(),
-        )
+    meeting_options: dict[str, str | None] = {"All meetings": None}
+    for m in meetings_list:
+        label = m.get("title", m.get("id", "Unknown"))
+        meeting_options[label] = m.get("id")
+    selected_meeting_label = st.selectbox(
+        "Filter by meeting (optional)", options=list(meeting_options.keys())
+    )
+    selected_meeting_id = meeting_options[selected_meeting_label]
 
     if st.button("Ask", disabled=not question):
         if not api_healthy:
@@ -133,7 +136,7 @@ elif page == "Ask Questions":
                 result = query_meetings(
                     question=question,
                     meeting_id=str(selected_meeting_id) if selected_meeting_id else None,
-                    strategy=str(strategy),
+                    strategy=sidebar_retrieval,
                 )
             if result:
                 # Display the generated answer

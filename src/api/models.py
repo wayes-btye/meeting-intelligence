@@ -4,13 +4,15 @@ from __future__ import annotations
 
 from pydantic import BaseModel
 
+from src.pipeline_config import ChunkingStrategy, RetrievalStrategy
+
 
 class QueryRequest(BaseModel):
     """Request body for the /api/query endpoint."""
 
     question: str
     meeting_id: str | None = None
-    strategy: str = "hybrid"  # "semantic" or "hybrid"
+    strategy: RetrievalStrategy = RetrievalStrategy.HYBRID
 
 
 class SourceChunk(BaseModel):
@@ -67,4 +69,25 @@ class IngestResponse(BaseModel):
     meeting_id: str
     title: str
     num_chunks: int
-    chunking_strategy: str
+    chunking_strategy: ChunkingStrategy
+
+
+class ExtractedItemResponse(BaseModel):
+    """A single extracted item in API responses."""
+
+    item_type: str
+    content: str
+    assignee: str | None = None
+    due_date: str | None = None
+    speaker: str | None = None
+    confidence: float = 1.0
+
+
+class ExtractResponse(BaseModel):
+    """Response body for the /api/meetings/{id}/extract endpoint."""
+
+    meeting_id: str
+    items_extracted: int
+    action_items: list[ExtractedItemResponse] = []
+    decisions: list[ExtractedItemResponse] = []
+    topics: list[ExtractedItemResponse] = []

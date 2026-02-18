@@ -9,6 +9,7 @@ from fastapi import APIRouter, File, Form, UploadFile
 from src.api.models import IngestResponse
 from src.ingestion.pipeline import ingest_transcript
 from src.ingestion.storage import get_supabase_client
+from src.pipeline_config import ChunkingStrategy
 
 router = APIRouter()
 
@@ -20,6 +21,9 @@ async def ingest(
     chunking_strategy: Annotated[str, Form()] = "speaker_turn",
 ) -> IngestResponse:
     """Upload a transcript file and run the ingestion pipeline."""
+    # Validate and convert to enum early
+    strategy = ChunkingStrategy(chunking_strategy)
+
     content = (await file.read()).decode("utf-8")
 
     # Determine format from file extension
@@ -27,7 +31,7 @@ async def ingest(
     format_map = {"vtt": "vtt", "txt": "text", "json": "json"}
     transcript_format = format_map.get(ext, "text")
 
-    meeting_id = ingest_transcript(content, transcript_format, title, chunking_strategy)
+    meeting_id = ingest_transcript(content, transcript_format, title, strategy)
 
     # Get chunk count
     client = get_supabase_client()
@@ -39,5 +43,5 @@ async def ingest(
         meeting_id=meeting_id,
         title=title,
         num_chunks=chunks.count or 0,
-        chunking_strategy=chunking_strategy,
+        chunking_strategy=strategy,
     )

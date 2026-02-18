@@ -74,7 +74,7 @@ The evaluation framework is a core part of the project, not an afterthought.
 
 ### What the Evaluation Showed
 
-> *This section will be populated with actual results after running the evaluation framework.*
+> *Run `python -m src.evaluation.runner` after loading MeetingBank data to generate a full evaluation report with metrics per strategy combination and cross-check results. See `scripts/` for data loading instructions.*
 
 ## Data
 
@@ -139,6 +139,25 @@ meeting-intelligence/
 └── README.md
 ```
 
+## Available Commands
+
+```bash
+# Development
+make api                # Start FastAPI dev server (port 8000)
+make streamlit          # Start Streamlit UI (port 8501)
+make test               # Run pytest suite
+make lint               # Run ruff + mypy
+make format             # Auto-format with ruff
+docker compose up       # Start all services
+
+# Data loading
+python scripts/download_meetingbank.py          # Download MeetingBank dataset
+python scripts/load_meetingbank.py --max 30     # Ingest 30 meetings into Supabase
+
+# Evaluation
+python -m src.evaluation.runner                 # Run full evaluation pipeline
+```
+
 ## Production Roadmap
 
 This is an MVP. For production deployment in a regulated environment (pharma/healthcare), you'd need:
@@ -165,7 +184,7 @@ I believe the interesting signal for a lead role isn't whether you used AI tools
 ## Engineering Standards
 
 - Type hints throughout, validated with mypy
-- Tests for each pipeline stage (ingestion, chunking, retrieval, generation)
+- 108 tests covering ingestion, API endpoints, strategy config, evaluation, and extraction
 - Docker Compose for reproducible local setup
 - Configuration via environment variables, no hardcoded secrets
 - Git workflow with feature branches and descriptive commits

@@ -8,6 +8,8 @@ from openai import OpenAI
 
 from supabase import create_client
 
+from src.pipeline_config import RetrievalStrategy
+
 
 def get_supabase_client():
     """Create and return a Supabase client from environment variables."""
@@ -65,3 +67,28 @@ def hybrid_search(
         },
     ).execute()
     return result.data
+
+
+def search(
+    query: str,
+    retrieval_strategy: str | RetrievalStrategy = RetrievalStrategy.HYBRID,
+    match_count: int = 10,
+    meeting_id: str | None = None,
+) -> list[dict]:
+    """Dispatch to the appropriate search strategy.
+
+    Args:
+        query: The user's question.
+        retrieval_strategy: ``"semantic"`` or ``"hybrid"`` (string or enum).
+        match_count: Maximum number of chunks to return.
+        meeting_id: Optional meeting ID filter.
+
+    Returns:
+        List of matching chunk dicts.
+    """
+    if isinstance(retrieval_strategy, str):
+        retrieval_strategy = RetrievalStrategy(retrieval_strategy)
+
+    if retrieval_strategy is RetrievalStrategy.SEMANTIC:
+        return semantic_search(query, match_count=match_count, meeting_id=meeting_id)
+    return hybrid_search(query, match_count=match_count)

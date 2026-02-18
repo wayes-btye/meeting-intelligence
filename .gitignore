@@ -28,3 +28,13 @@ build/
 
 # Logs
 *.log
+
+# Supabase local config
+supabase/.temp/
+
+# Python
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/

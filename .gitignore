@@ -29,6 +29,9 @@ build/
 # Logs
 *.log
 
+# Downloaded datasets (large files)
+data/meetingbank/
+
 # Supabase local config
 supabase/.temp/
 

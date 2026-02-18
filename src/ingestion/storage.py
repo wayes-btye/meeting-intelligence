@@ -2,21 +2,19 @@
 
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
 from supabase import Client, create_client
+
+from src.config import settings
 
 if TYPE_CHECKING:
     from src.ingestion.models import Chunk
 
 
 def get_supabase_client() -> Client:
-    """Create and return a Supabase client from environment variables."""
-    return create_client(
-        os.getenv("SUPABASE_URL", ""),
-        os.getenv("SUPABASE_KEY", ""),
-    )
+    """Create and return a Supabase client from settings."""
+    return create_client(settings.supabase_url, settings.supabase_key)
 
 
 def store_meeting(

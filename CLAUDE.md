@@ -33,6 +33,7 @@ tests/            # pytest test suite
 data/             # Sample transcripts, MeetingBank subset
 supabase/         # Database migrations
 docs/             # Work log, architecture notes
+.issues/          # Auto-exported GitHub issues/PRs as markdown (committed, nightly update)
 private-context/  # Private planning docs (gitignored — never commit)
 ```
 
@@ -158,6 +159,11 @@ git branch -d feat/1-foundation
 - Supabase as single store for vectors + metadata + structured data (no separate vector DB)
 - Strategy toggle system: swap chunking (naive/speaker-turn) and retrieval (semantic/hybrid) via PipelineConfig
 - Evaluation is core: auto-generated test sets, RAGAS metrics, RAG vs context-stuffing cross-check
+
+## GitHub Issues Context (`.issues/`)
+The `.issues/` directory contains **auto-exported GitHub issues and PRs as markdown**, updated nightly by a GitHub Actions workflow. This directory is **committed to the repo** (not gitignored).
+
+**Purpose:** Provides full issue/PR context to any LLM session — including Claude web, OpenAI connectors, or any tool that reads repo files — without requiring GitHub CLI setup. When answering questions about project history, tasks, or decisions, **read `.issues/` for full context** rather than assuming the GitHub API is available.
 
 ## private-context/
 The `private-context/` directory is **gitignored**. It contains private planning docs,

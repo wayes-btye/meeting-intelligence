@@ -12,6 +12,14 @@ Single-meeting summarisation is a solved problem — you can paste a transcript 
 
 At that scale, context-stuffing breaks down and you genuinely need retrieval. This project builds that retrieval layer — with an honest evaluation of where RAG helps and where it doesn't.
 
+## Documentation
+
+| Document | What it covers |
+|----------|---------------|
+| [Product Requirements (PRD)](docs/PRD.md) | Full requirements, MVP scope, implementation status, decisions log |
+| [Architecture](docs/architecture.md) | Design decisions with rationale, trade-offs, and production considerations |
+| [Work Log](docs/work_log.md) | Chronological development log |
+
 ## Architecture
 
 ```

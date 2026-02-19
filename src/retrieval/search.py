@@ -4,13 +4,14 @@ from __future__ import annotations
 
 from openai import OpenAI
 
+from src.config import settings
 from src.ingestion.storage import get_supabase_client
 from src.pipeline_config import RetrievalStrategy
 
 
 def get_query_embedding(query: str, model: str = "text-embedding-3-small") -> list[float]:
     """Generate an embedding vector for the given query string."""
-    client = OpenAI()
+    client = OpenAI(api_key=settings.openai_api_key)
     response = client.embeddings.create(input=[query], model=model)
     return response.data[0].embedding
 

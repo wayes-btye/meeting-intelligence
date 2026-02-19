@@ -1,0 +1,33 @@
+name: Export Issues to Markdown
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  export:
+    name: Export Issues
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install gh2md
+        run: npm install -g gh2md
+
+      - name: Export issues
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH2MD_TOKEN }}
+        run: |
+          mkdir -p .issues
+          gh2md ${{ github.repository }} .issues/issues.md --token $GITHUB_TOKEN
+
+      - name: Commit changes
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .issues/
+          git diff --staged --quiet || git commit -m "chore: update exported issues"
+          git push

@@ -7,51 +7,49 @@ on:
 
 jobs:
   export:
-    name: Export Issues
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: read
-      pull-requests: read
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      - name: Export issues and PRs to markdown
-        env:
-          GH_TOKEN: ${{ secrets.GH2MD_TOKEN }}
+      - name: Install gh2md
         run: |
+          pip3 install --user --upgrade gh2md
+
+      - name: Export issues & PRs to .issues directory
+        env:
+          GITHUB_ACCESS_TOKEN: ${{ secrets.GH2MD_TOKEN }}
+        run: |
+          # WORKAROUND: gh2md --idempotent is broken (see gh2md issue #43)
+          # Clear and recreate directory to avoid "already exists" error
+          rm -rf .issues
           mkdir -p .issues
-          REPO="${{ github.repository }}"
 
-          {
-            echo "# GitHub Issues & PRs"
-            echo ""
-            echo "_Auto-exported on $(date -u '+%Y-%m-%d %H:%M UTC')_"
-            echo ""
-
-            echo "## Open Issues"
-            echo ""
-            gh issue list --repo "$REPO" --state open --limit 100 \
-              --json number,title,body,labels,assignees,createdAt,updatedAt,url \
-              | jq -r '.[] | "### #\(.number) — \(.title)\n\n**URL:** \(.url)  \n**Created:** \(.createdAt[:10])  \n**Labels:** \([.labels[].name] | join(", "))  \n\n\(.body // "_No description._")\n\n---\n"'
-
-            echo "## Closed Issues"
-            echo ""
-            gh issue list --repo "$REPO" --state closed --limit 100 \
-              --json number,title,labels,createdAt,url \
-              | jq -r '.[] | "### #\(.number) — \(.title)\n\n**URL:** \(.url)  \n**Created:** \(.createdAt[:10])  \n**Labels:** \([.labels[].name] | join(", "))\n\n---\n"'
-
-            echo "## Pull Requests"
-            echo ""
-            gh pr list --repo "$REPO" --state all --limit 100 \
-              --json number,title,body,state,createdAt,url,headRefName \
-              | jq -r '.[] | "### PR #\(.number) — \(.title) [\(.state)]\n\n**URL:** \(.url)  \n**Branch:** \(.headRefName)  \n**Created:** \(.createdAt[:10])  \n\n\(.body // "_No description._")\n\n---\n"'
-          } > .issues/issues.md
+          # Export all issues + PRs, one file per item, as .md
+          $HOME/.local/bin/gh2md \
+            "$GITHUB_REPOSITORY" \
+            .issues \
+            --multiple-files \
+            --file-extension .md
 
       - name: Commit changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .issues/
-          git diff --staged --quiet || git commit -m "chore: update exported issues"
-          git push
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+
+          git add .issues
+
+          if git diff --staged --quiet; then
+            echo "No changes to commit";
+            exit 0;
+          fi
+
+          git commit -m "chore: update .issues export from gh2md"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@v0.8.0
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}

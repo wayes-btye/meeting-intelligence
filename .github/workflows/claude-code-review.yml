@@ -2,16 +2,16 @@ name: Claude Code Review
 
 on:
   pull_request:
-    types: [opened, synchronize]
+    types: [opened, synchronize, ready_for_review, reopened]
 
 jobs:
-  review:
-    name: Claude Review
+  claude-review:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      pull-requests: write
-      issues: write
+      pull-requests: read
+      issues: read
+      id-token: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -19,16 +19,7 @@ jobs:
 
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
-          direct_prompt: |
-            Review this PR. Read CLAUDE.md for project conventions.
-            Focus on: correctness, type safety, test coverage, and adherence to
-            the project's conventions (conventional commits, ruff/mypy compliance).
-            Be concise — flag real issues, skip nitpicks.
-          allowed_tools: |
-            Bash(gh pr comment *)
-            Bash(gh pr diff *)
-            Bash(gh pr view *)
-            Bash(gh pr checks *)
-            Bash(gh api *)
-          timeout_minutes: 10
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          plugin_marketplaces: 'https://github.com/anthropics/claude-code.git'
+          plugins: 'code-review@claude-code-plugins'
+          prompt: '/code-review:code-review ${{ github.repository }}/pull/${{ github.event.pull_request.number }}'

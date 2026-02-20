@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes.extraction import router as extraction_router
 from src.api.routes.ingest import router as ingest_router
@@ -9,6 +10,18 @@ app = FastAPI(
     title="Meeting Intelligence API",
     description="RAG-powered meeting transcript analysis",
     version="0.1.0",
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost:8501",
+    ],
+    allow_origin_regex=r"https://.*\.vercel\.app",
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(ingest_router)

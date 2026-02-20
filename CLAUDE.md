@@ -154,6 +154,16 @@ git branch -d feat/1-foundation
 - **Use for**: UI testing and validation after Streamlit changes
 - **Best practice**: Take screenshots before/after UI changes
 
+## PRD Maintenance
+- All new features must be added to `docs/PRD.md` with ID, priority, and status before implementation.
+- Update the Decisions Log in `docs/PRD.md` when architectural decisions are made or changed.
+
+## Custom Skills (`.claude/commands/`)
+Project-specific slash commands available as `/project:<name>`:
+- `/project:status` — open issues, test status, mypy errors
+- `/project:ingest-test` — run a transcript through the full pipeline with verification
+- `/project:smoke-test` — guided walkthrough of all main user flows
+
 ## Key Design Decisions
 - Direct Claude API calls (no orchestration frameworks) — understand what happens under the hood
 - Supabase as single store for vectors + metadata + structured data (no separate vector DB)

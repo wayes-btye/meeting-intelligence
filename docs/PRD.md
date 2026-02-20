@@ -203,6 +203,34 @@ The choice to build this over the other options (code documentation assistant, c
 | F60 | MeetingBank data loadable via `scripts/load_meetingbank.py` | Must | ⚠️ Script done; 30 JSON files downloaded; not yet loaded into live Supabase (Issue #26) |
 | F61 | Type checking passes cleanly (`mypy src/`) | Must | ❌ 218 pre-existing type errors — Issue #30 |
 
+### 4.12 Ingestion — Bulk and Enterprise Formats
+
+| ID | Requirement | Priority | Phase 2 Status |
+|----|-------------|----------|----------------|
+| F62 | Zip file upload: ingest multiple transcripts in one upload, each as a separate meeting | Should | 🔲 Not started — Issue #34 |
+| F63 | Microsoft Teams VTT format: explicit parser support for `<v SpeakerName>` inline tag format; currently the VTT parser likely loses speaker labels from Teams exports | Must | 🔲 Not started — Issue #34 |
+
+### 4.13 Upload-time Visual Summary
+
+| ID | Requirement | Priority | Phase 2 Status |
+|----|-------------|----------|----------------|
+| F64 | On transcript upload, immediately display: extracted action items/decisions/topics (via direct Claude call) and a Gemini-generated visual summary (speaker breakdown, topic timeline) before RAG ingestion completes | Should | 🔲 Not started — Issue #35 |
+
+### 4.14 Frontend and Deployment
+
+| ID | Requirement | Priority | Phase 2 Status |
+|----|-------------|----------|----------------|
+| F65 | React/Next.js frontend replacing Streamlit as the demo-facing UI; Streamlit retained as dev/debug tool | Should | 🔲 Not started — Issue #32 |
+| F66 | Cloud deployment: FastAPI to Google Cloud Run; frontend to Vercel (once React is built); GitHub Actions deploy workflow | Should | 🔲 Not started — Issue #31 |
+
+### 4.15 Test Coverage
+
+| ID | Requirement | Priority | Phase 2 Status |
+|----|-------------|----------|----------------|
+| F67 | Integration tests with live Supabase: vector search, hybrid search, storage (marked `@pytest.mark.expensive`) | Must | 🔲 Not started — Issue #33 |
+| F68 | End-to-end pipeline test: ingest real transcript → chunk → embed → store → query → verify answer contains expected content (marked `@pytest.mark.expensive`) | Must | 🔲 Not started — Issue #33 |
+| F69 | Real MeetingBank fixtures in `tests/fixtures/meetingbank/` for meaningful test assertions | Should | 🔲 Not started — Issue #33 |
+
 ---
 
 ## 5. Non-Functional Requirements
@@ -334,3 +362,6 @@ The current pipeline accepts uploaded text files. With thin adapters for Teams G
 | Evaluation approach: library or Claude-as-judge? | Claude-as-judge — more flexible for domain-specific quality criteria, no additional dependencies, interpretable output. RAGAS/DeepEval would be appropriate for a longer-running project with more standardised benchmarks. | 2026-02-18 |
 | Context-stuffing vs RAG for single meetings? | Explicit cross-check evaluation addresses this. For a single meeting, context-stuffing is often better. The system makes this visible rather than hiding it. | 2026-02-18 |
 | Query routing: RAG for everything vs router? | Router — structured queries for known entities (action items, decisions) go directly to the database. More accurate, faster, and cheaper than running structured queries through a probabilistic retrieval pipeline. | 2026-02-18 |
+| Streamlit vs React for demo UI? | Keep Streamlit as dev/debug tool. React (Next.js) as the public-facing demo UI deployed to Vercel. FastAPI is API-only — frontend is a pure client with zero backend changes needed. | 2026-02-20 |
+| Zip upload for assessor convenience? | Add zip file upload supporting bulk ingestion of multiple transcripts. Assessors likely have a folder of Teams meeting exports — this removes friction from the demo. | 2026-02-20 |
+| Upload-time visual summary approach? | Run Claude extraction + Gemini visual generation immediately on upload, before RAG ingestion completes. Provides two distinct value propositions from one upload action. | 2026-02-20 |

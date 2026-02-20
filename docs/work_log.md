@@ -27,3 +27,17 @@
 **Decisions:**
 - PRD covers full product vision with explicit MVP demarcation — not MVP-only
 - Architecture doc explains trade-offs in plain language, not just "what we chose"
+
+### [2026-02-20T00:00:00Z] — Session: Planning review + new feature scoping
+**Focus:** Address gaps in testing, deployment, UI, and feature scope; add Claude workflow tooling
+**Done:**
+- Added CLAUDE.md statements for PRD maintenance and custom skills
+- Created `.claude/commands/` with `/project:status`, `/project:ingest-test`, `/project:smoke-test`
+- Updated PRD with F62–F69 (zip upload, Teams VTT, Gemini visual summary, React UI, cloud deploy, test coverage)
+- Created GitHub Issues #31–#35 for each new feature area
+**Next:**
+- Fix Issue #26 (load MeetingBank data) — highest priority, blocks demo
+- Fix Issues #22, #23, #24, #25, #30 (known bugs)
+**Decisions:**
+- Streamlit retained as dev tool; React (Next.js) to be built as demo UI (Issue #32)
+- Gemini API to be added for upload-time visual summary (Issue #35)

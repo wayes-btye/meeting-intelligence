@@ -99,10 +99,27 @@ def parse_plain_text(content: str) -> list[TranscriptSegment]:
 
 
 def parse_json(content: str) -> list[TranscriptSegment]:
-    """Parse a JSON transcript (AssemblyAI or MeetingBank format).
+    """Parse a JSON transcript (AssemblyAI, MeetingBank, or internal segments format).
 
-    AssemblyAI: ``{"utterances": [{"speaker": "A", "text": "...", "start": ms, "end": ms}]}``
-    MeetingBank: ``{"segments": [{"speaker": "...", "text": "...", "start_time": s, "end_time": s}]}``
+    Supported formats:
+
+    AssemblyAI::
+
+        {"utterances": [{"speaker": "A", "text": "...", "start": ms, "end": ms}]}
+
+    MeetingBank canonical (transcription key, speaker_id field, times in seconds)::
+
+        {
+          "meeting_id": "...",
+          "transcription": [
+            {"speaker_id": "SPEAKER_0", "text": "...", "start_time": s, "end_time": s}
+          ],
+          "summary": "..."
+        }
+
+    Internal segments format (used in test fixtures and pipeline output)::
+
+        {"segments": [{"speaker": "...", "text": "...", "start_time": s, "end_time": s}]}
     """
     data = json.loads(content)
     segments: list[TranscriptSegment] = []
@@ -118,8 +135,19 @@ def parse_json(content: str) -> list[TranscriptSegment]:
                     end_time=utt.get("end", 0) / 1000.0,
                 )
             )
+    elif "transcription" in data:
+        # MeetingBank canonical format — speaker_id field, times in seconds
+        for item in data["transcription"]:
+            segments.append(
+                TranscriptSegment(
+                    speaker=item.get("speaker_id"),
+                    text=item["text"],
+                    start_time=item.get("start_time"),
+                    end_time=item.get("end_time"),
+                )
+            )
     elif "segments" in data:
-        # MeetingBank format — times in seconds
+        # Internal segments format — times in seconds
         for seg in data["segments"]:
             segments.append(
                 TranscriptSegment(

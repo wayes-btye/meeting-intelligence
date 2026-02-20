@@ -3,12 +3,15 @@
 from __future__ import annotations
 
 import json
+import pathlib
 
 import pytest
 
 from src.ingestion.chunking import naive_chunk, speaker_turn_chunk
 from src.ingestion.models import TranscriptSegment
 from src.ingestion.parsers import parse_json, parse_plain_text, parse_transcript, parse_vtt
+
+FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures" / "meetingbank"
 
 
 class TestVTTParser:
@@ -204,3 +207,52 @@ class TestParseDispatcher:
     def test_unknown_format_raises(self) -> None:
         with pytest.raises(ValueError, match="Unknown transcript format"):
             parse_transcript("data", "unknown_format")
+
+
+# ── Test: Real MeetingBank fixture ───────────────────────────────────────────
+
+
+class TestMeetingBankRealFixture:
+    """Tests using the real MeetingBank JSON fixture in tests/fixtures/meetingbank/.
+
+    Issue #33: verify that the parser correctly handles the actual MeetingBank
+    transcript format (transcription key, speaker_id field, times in seconds).
+    """
+
+    def test_meetingbank_json_parser_with_real_fixture(self) -> None:
+        """Parser correctly handles real MeetingBank JSON format.
+
+        The fixture uses the canonical MeetingBank schema:
+          {"meeting_id": ..., "transcription": [...], "summary": ...}
+        where each item has speaker_id, start_time, end_time, text.
+        """
+        fixture_path = FIXTURES_DIR / "sample_council_meeting.json"
+        content = fixture_path.read_text(encoding="utf-8")
+        segments = parse_json(content)
+
+        # Non-trivial parse result
+        assert len(segments) >= 3, f"Expected >= 3 segments, got {len(segments)}"
+
+        # Speaker labels populated (speaker_id -> speaker)
+        speakers = [s.speaker for s in segments if s.speaker is not None]
+        assert len(speakers) > 0, "At least some segments should have speaker labels"
+
+        # Timestamps present and reasonable
+        times_present = [s for s in segments if s.start_time is not None and s.start_time >= 0]
+        assert len(times_present) == len(segments), "All segments should have start_time"
+
+        # Text is non-empty for all segments
+        assert all(s.text.strip() for s in segments), "No segment should have empty text"
+
+        # Timestamps are ordered (or at least non-negative)
+        for seg in segments:
+            assert seg.start_time >= 0, f"start_time should be >= 0, got {seg.start_time}"
+
+    def test_meetingbank_fixture_chunking(self) -> None:
+        """Real fixture produces reasonable naive chunks."""
+        fixture_path = FIXTURES_DIR / "sample_council_meeting.json"
+        content = fixture_path.read_text(encoding="utf-8")
+        segments = parse_json(content)
+        chunks = naive_chunk(segments, chunk_size=200, overlap=20)
+        assert len(chunks) >= 1, "Should produce at least one chunk"
+        assert all(c.strategy == "naive" for c in chunks)

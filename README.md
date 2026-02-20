@@ -76,7 +76,7 @@ The evaluation framework is a core part of the project, not an afterthought.
 ### Approach
 
 - **Auto-generated test set** from MeetingBank reference summaries — Claude generates Q&A pairs from professional meeting minutes, producing 150-250 test questions across difficulty levels.
-- **RAGAS + DeepEval metrics** — Faithfulness, answer relevancy, context precision/recall measured systematically.
+- **Claude-as-judge evaluation** — Faithfulness, answer relevancy, and context precision/recall assessed using Claude as the evaluator, with interpretable per-question reasoning. (RAGAS/DeepEval libraries are not used; the evaluation logic is explicit Python code.)
 - **Cross-check evaluation** — Every test question runs through both the RAG pipeline and full-transcript context-stuffing. Disagreements are categorised to understand where RAG genuinely helps vs where simpler approaches work fine.
 - **Strategy comparison** — Side-by-side metrics for different chunking and retrieval configurations, with honest analysis of what actually moved the needle.
 

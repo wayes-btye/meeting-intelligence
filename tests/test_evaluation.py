@@ -9,6 +9,8 @@ from __future__ import annotations
 
 import json
 import os
+import subprocess
+import sys
 import tempfile
 from unittest.mock import MagicMock, patch
 
@@ -481,3 +483,29 @@ class TestModels:
         assert r.avg_faithfulness == 0.0
         assert r.num_questions == 0
         assert r.individual_results == []
+
+
+# ── Test: Runner module entry point ──────────────────────────────────────────
+
+
+def test_runner_callable_as_module() -> None:
+    """python -m src.evaluation.runner --help must exit 0.
+
+    Verifies Issue #23 fix: the runner must be invocable as a module with
+    a proper __main__ block. Before the fix this would error with
+    'No module named src.evaluation.runner.__main__; ...' or similar.
+    """
+    result = subprocess.run(
+        [sys.executable, "-m", "src.evaluation.runner", "--help"],
+        capture_output=True,
+        text=True,
+        cwd=str(__file__.replace("\\", "/").rsplit("/tests/", 1)[0]),  # project root
+    )
+    assert result.returncode == 0, (
+        f"Runner --help failed (exit {result.returncode}).\n"
+        f"stdout: {result.stdout}\nstderr: {result.stderr}"
+    )
+    # --help output should describe the runner's purpose
+    assert "meeting" in result.stdout.lower() or "eval" in result.stdout.lower(), (
+        f"--help output doesn't describe the runner: {result.stdout}"
+    )

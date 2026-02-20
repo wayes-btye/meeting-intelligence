@@ -15,6 +15,7 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     openai_api_key: str = ""
     assemblyai_api_key: str = ""
+    gemini_api_key: str = ""  # Optional — Gemini visual summary; graceful degradation if absent
 
     # Supabase
     supabase_url: str = ""

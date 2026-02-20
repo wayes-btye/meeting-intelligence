@@ -45,7 +45,7 @@ def test_ingest_requires_file():
 # --- Issue #22: audio upload must not crash with 500 ---
 # Both tests below are fully deterministic — no live API calls.
 
-def test_audio_upload_no_key_returns_501(client):
+def test_audio_upload_no_key_returns_501():
     """Audio upload returns 501 when ASSEMBLYAI_API_KEY is not configured.
 
     Patches settings so the key is empty → 501 path, no external call.
@@ -63,7 +63,7 @@ def test_audio_upload_no_key_returns_501(client):
     assert "not configured" in response.json()["detail"].lower()
 
 
-def test_audio_upload_transcription_failure_returns_400_not_500(client):
+def test_audio_upload_transcription_failure_returns_400_not_500():
     """AssemblyAI rejecting audio returns 400, not 500.
 
     Patches _transcribe_audio to raise HTTPException(400) and mocks a non-empty key.
@@ -90,7 +90,7 @@ def test_audio_upload_transcription_failure_returns_400_not_500(client):
 
 
 # --- Issue #25: GET /extract must not exist (only POST) ---
-def test_extract_endpoint_no_get_method(client):
+def test_extract_endpoint_no_get_method():
     """GET /api/meetings/{id}/extract must not exist — only POST should.
 
     Uses /api/ prefix to match actual route registration.

@@ -79,10 +79,14 @@ async def ingest(
     # Validate chunking strategy enum early
     strategy = ChunkingStrategy(chunking_strategy)
 
-    # Detect extension before attempting any decode — audio is binary
-    ext = file.filename.rsplit(".", 1)[-1].lower() if file.filename else "txt"
+    # Detect extension before attempting any decode — audio is binary.
+    # Fall back to Content-Type for extensionless filenames (e.g. "recording" uploaded
+    # as audio/mpeg) — guards against the UTF-8 decode crash on binary-but-unnamed files.
+    filename = file.filename or ""
+    ext = filename.rsplit(".", 1)[-1].lower() if "." in filename else ""
+    content_type = (file.content_type or "").lower()
 
-    if ext in AUDIO_EXTENSIONS:
+    if ext in AUDIO_EXTENSIONS or content_type.startswith("audio/"):
         # Audio path: transcribe with AssemblyAI or return 501 if not configured
         if not settings.assemblyai_api_key:
             raise HTTPException(

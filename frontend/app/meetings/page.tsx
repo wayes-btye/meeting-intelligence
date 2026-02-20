@@ -38,13 +38,14 @@ export default function MeetingsPage() {
   // Load detail when a meeting is selected
   useEffect(() => {
     if (!selected) return;
+    const id = selected;
     setDetailLoading(true);
     setDetail(null);
     api
-      .getMeeting(selected)
-      .then(setDetail)
+      .getMeeting(id)
+      .then((data) => { if (id === selected) setDetail(data); })
       .catch(console.error)
-      .finally(() => setDetailLoading(false));
+      .finally(() => { if (id === selected) setDetailLoading(false); });
   }, [selected]);
 
   const totalPages = Math.ceil(meetings.length / PAGE_SIZE);

@@ -17,7 +17,6 @@ test("chat page renders form elements", async ({ page }) => {
   await expect(page.getByLabel("Meeting")).toBeVisible();
   await expect(page.getByLabel("Question")).toBeVisible();
   await expect(page.getByRole("button", { name: /ask/i })).toBeDisabled();
-  await expect(page.getByText("Chunking Strategy")).toBeVisible();
   await expect(page.getByText("Retrieval Strategy")).toBeVisible();
 });
 

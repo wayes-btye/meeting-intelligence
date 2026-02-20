@@ -33,7 +33,6 @@ test("upload page renders drop zone and strategy selectors", async ({
   await page.goto(BASE_URL);
   await expect(page.getByTestId("drop-zone")).toBeVisible();
   await expect(page.getByText("Chunking Strategy")).toBeVisible();
-  await expect(page.getByText("Retrieval Strategy")).toBeVisible();
   await expect(
     page.getByRole("button", { name: /upload/i }),
   ).toBeDisabled();

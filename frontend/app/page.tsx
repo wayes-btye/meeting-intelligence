@@ -19,6 +19,8 @@ import { Progress } from "@/components/ui/progress";
 
 type Phase = "idle" | "uploading" | "extracting" | "done" | "error";
 
+const ACCEPTED_EXTS = [".vtt", ".txt", ".json"];
+
 interface Result {
   ingest: IngestResponse;
   extraction: ExtractResponse;
@@ -39,7 +41,12 @@ export default function UploadPage() {
     e.preventDefault();
     setIsDragging(false);
     const dropped = e.dataTransfer.files[0];
-    if (dropped) setFile(dropped);
+    if (!dropped) return;
+    if (!ACCEPTED_EXTS.some((ext) => dropped.name.endsWith(ext))) {
+      setError("Unsupported file type. Drop a .vtt, .txt, or .json file.");
+      return;
+    }
+    setFile(dropped);
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

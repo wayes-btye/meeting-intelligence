@@ -35,9 +35,12 @@ def _transcribe_audio(raw: bytes) -> str:
 
     aai.settings.api_key = settings.assemblyai_api_key
     transcriber = aai.Transcriber()
+    # speech_models (plural) is required by current AssemblyAI API — SDK 0.52 sends empty list
+    # by default which the API rejects. Confirmed via API error: must be ["universal-3-pro"].
+    config = aai.TranscriptionConfig(speech_models=["universal-3-pro"])
 
     try:
-        transcript = transcriber.transcribe(raw)
+        transcript = transcriber.transcribe(raw, config=config)
         if transcript.status == aai.TranscriptStatus.error:
             # AssemblyAI rejected the audio content (corrupted, unsupported format, etc.)
             raise HTTPException(

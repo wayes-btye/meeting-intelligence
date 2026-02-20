@@ -61,7 +61,7 @@ def _cleanup_meeting(meeting_id: str) -> None:
         client = get_supabase_client()
         client.table("chunks").delete().eq("meeting_id", meeting_id).execute()
         client.table("meetings").delete().eq("id", meeting_id).execute()
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         print(
             f"\nWARNING: cleanup failed for meeting_id={meeting_id!r}: {exc}\n"
             "Manual cleanup needed:\n"
@@ -117,16 +117,15 @@ def test_full_ingest_and_query_pipeline() -> None:
         # ── Step 1: Ingest via multipart form-data ────────────────────────────
         # POST /api/ingest — UploadFile + Form fields (title, chunking_strategy)
         # The server generates a UUID and returns it as meeting_id.
-        with httpx.Client(timeout=120.0) as client:
-            with open(tmp_path, "rb") as f:
-                ingest_resp = client.post(
-                    f"{API_BASE_URL}/api/ingest",
-                    files={"file": ("council_meeting.txt", f, "text/plain")},
-                    data={
-                        "title": "Integration Test — Oak Street Council Meeting",
-                        "chunking_strategy": "speaker_turn",
-                    },
-                )
+        with httpx.Client(timeout=120.0) as client, open(tmp_path, "rb") as f:
+            ingest_resp = client.post(
+                f"{API_BASE_URL}/api/ingest",
+                files={"file": ("council_meeting.txt", f, "text/plain")},
+                data={
+                    "title": "Integration Test — Oak Street Council Meeting",
+                    "chunking_strategy": "speaker_turn",
+                },
+            )
 
         assert ingest_resp.status_code == 200, (
             f"Ingest failed ({ingest_resp.status_code}): {ingest_resp.text}"
@@ -206,13 +205,12 @@ def test_ingest_stores_chunks_in_supabase() -> None:
         tmp_path = tmp.name
 
     try:
-        with httpx.Client(timeout=120.0) as client:
-            with open(tmp_path, "rb") as f:
-                resp = client.post(
-                    f"{API_BASE_URL}/api/ingest",
-                    files={"file": ("council_naive.txt", f, "text/plain")},
-                    data={"title": "Chunk Count Test", "chunking_strategy": "naive"},
-                )
+        with httpx.Client(timeout=120.0) as client, open(tmp_path, "rb") as f:
+            resp = client.post(
+                f"{API_BASE_URL}/api/ingest",
+                files={"file": ("council_naive.txt", f, "text/plain")},
+                data={"title": "Chunk Count Test", "chunking_strategy": "naive"},
+            )
 
         assert resp.status_code == 200, f"Ingest failed: {resp.text}"
         data = resp.json()

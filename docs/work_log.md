@@ -142,3 +142,17 @@
 - Wave 2: Issues #30 (mypy), #31 (Cloud Run), #34 (test coverage), #35 (Gemini)
 **Decisions:**
 - All three PRs merged despite Lint FAIL in CI — failures are pre-existing mypy Issue #30, not regressions
+
+### [2026-02-20T19:30:00Z] — Task: Post-merge verification + Wave 2 setup
+**Focus:** UI smoke test, Supabase cleanup, Wave 2 worktrees
+**Done:**
+- Fixed ruff errors in test_pipeline_integration.py (RUF100, SIM117×2); CI lint now passes
+- Ran 3/3 expensive integration tests — all passed; Supabase cleaned of test data
+- UI smoke tested via chrome-devtools MCP: Upload/Chat/Meetings pages all load, API online indicator working, meetings table shows 32 meetings
+- Fixed unhandled Anthropic APIStatusError (529) in extract + query routes — now returns HTTP 503 with CORS headers
+- Created Wave 2 worktrees: wt6(#30), wt7(#31), wt8(#34), wt9(#35)
+**Next:**
+- Open Claude Code in each Wave 2 worktree and start work (priority: #30 mypy first)
+- Worktree cleanup: delete C:\meeting-intelligence-wt{1,3,5}-issue-* folders in Explorer
+**Decisions:**
+- Wave 2 uses separate worktrees per issue (not one combined) — independent scope, parallelisable

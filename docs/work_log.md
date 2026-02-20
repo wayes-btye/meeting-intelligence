@@ -28,6 +28,18 @@
 - PRD covers full product vision with explicit MVP demarcation — not MVP-only
 - Architecture doc explains trade-offs in plain language, not just "what we chose"
 
+### [2026-02-20T01:05:33Z] — Task: Core flow fixed (PR #27 merged)
+**Focus:** Fix SDK clients + UI field names — all API calls now work
+**Done:**
+- Fixed all SDK clients (Supabase, Anthropic, OpenAI) to use `settings.x` not `os.getenv()` — was causing 500 errors on every endpoint on Windows
+- Fixed UI field name mismatches — meetings page now shows correct dates, chunk counts, extracted items
+- Manually verified full flow: upload → query → answer with citations ✅
+- Added docs/manual-testing-guide.md, docs/how-it-works.md, docs/understanding-the-system.md
+**Next:**
+- Issues #22, #23, #25, #26, #30 still open (confirmed in PR body)
+**Decisions:**
+- Issue #24 now closed — all field name fixes included in this PR
+
 ### [2026-02-20T00:00:00Z] — Session: Planning review + new feature scoping
 **Focus:** Address gaps in testing, deployment, UI, and feature scope; add Claude workflow tooling
 **Done:**
@@ -41,3 +53,18 @@
 **Decisions:**
 - Streamlit retained as dev tool; React (Next.js) to be built as demo UI (Issue #32)
 - Gemini API to be added for upload-time visual summary (Issue #35)
+
+### [2026-02-20T02:00:00Z] — Task: Worktree setup — Wave 1 created
+**Focus:** Create Wave 1 worktrees (WT1, WT3, WT5) with comprehensive context files
+**Done:**
+- Created docs/worktrees/ with full WORKTREE.md for WT1 (#22,#25), WT3 (#23,#33), WT5 (#32)
+- Context files include: TDD instructions, conflict map, testing strategy, manual verification flags, Vercel deployment notes
+- Created worktrees: meeting-intelligence-wt1-issue-22, wt3-issue-23, wt5-issue-32
+- Added GOOGLE_API_KEY to Settings and .env.example (for Gemini/Issue #35)
+- Cleaned up stale fix/storage-settings local branch
+**Next:**
+- User opens Claude Code in each worktree terminal; first message: read docs/worktrees/wtX-*.md
+- Manual task: run `python scripts/load_meetingbank.py --max 30` while Wave 1 runs (Issue #26)
+- Wave 2 worktrees (WT4, WT6) created after Wave 1 PRs merged
+**Decisions:**
+- Worktree context files committed to main so context is never lost across sessions

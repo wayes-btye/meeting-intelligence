@@ -2,8 +2,7 @@
 
 from __future__ import annotations
 
-import os
-import tempfile
+import asyncio
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
@@ -23,27 +22,24 @@ MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 AUDIO_EXTENSIONS = {"mp3", "wav", "m4a", "mp4", "ogg", "flac"}
 
 
-def _transcribe_audio(raw: bytes, ext: str) -> str:
+def _transcribe_audio(raw: bytes) -> str:
     """Transcribe audio bytes via AssemblyAI SDK.
 
-    Writes to a temp file (SDK requires a path or URL), polls until complete,
-    and returns the transcript text.
+    The SDK accepts bytes directly — no temp file needed.
 
-    Raises HTTPException(400) on transcription failure.
+    Raises:
+        HTTPException(400): Bad audio content (transcript error from AssemblyAI).
+        HTTPException(503): Infrastructure error (bad API key, network, provider outage).
     """
-    import assemblyai as aai  # type: ignore[import-untyped]  # no stubs; import inside function — only needed for audio path
+    import assemblyai as aai  # type: ignore[import-untyped]  # no stubs; import inside function
 
     aai.settings.api_key = settings.assemblyai_api_key
     transcriber = aai.Transcriber()
 
-    # AssemblyAI SDK needs a file path — write bytes to a temp file
-    with tempfile.NamedTemporaryFile(suffix=f".{ext}", delete=False) as tmp:
-        tmp.write(raw)
-        tmp_path = tmp.name
-
     try:
-        transcript = transcriber.transcribe(tmp_path)
+        transcript = transcriber.transcribe(raw)
         if transcript.status == aai.TranscriptStatus.error:
+            # AssemblyAI rejected the audio content (corrupted, unsupported format, etc.)
             raise HTTPException(
                 status_code=400,
                 detail=f"Transcription failed: {transcript.error}",
@@ -52,12 +48,12 @@ def _transcribe_audio(raw: bytes, ext: str) -> str:
     except HTTPException:
         raise
     except Exception as exc:
+        # Infrastructure error — invalid API key, network failure, provider outage.
+        # Return 503, not 400: this is not the client's fault.
         raise HTTPException(
-            status_code=400,
-            detail=f"Transcription failed: {exc}",
+            status_code=503,
+            detail=f"Transcription service unavailable: {exc}",
         ) from exc
-    finally:
-        os.unlink(tmp_path)
 
 
 @router.post("/api/ingest", response_model=IngestResponse)
@@ -96,10 +92,8 @@ async def ingest(
                     "Please upload a text transcript (.vtt, .txt, .json)."
                 ),
             )
-        # NOTE: _transcribe_audio is synchronous (AssemblyAI SDK polling).
-        # This blocks the event loop on the ingest call — acceptable for current
-        # single-user usage. A proper fix would use asyncio.to_thread().
-        content = _transcribe_audio(raw, ext)
+        # Run synchronous AssemblyAI SDK in a thread — avoids blocking the event loop
+        content = await asyncio.to_thread(_transcribe_audio, raw)
         transcript_format = "text"
     else:
         # Text path: decode as UTF-8 (existing behaviour)

@@ -128,3 +128,17 @@
 - Run `cd frontend && npm run dev` then verify all 3 pages visually before PR
 **Decisions:**
 - chrome-devtools MCP added to .mcp.json (project scope) for UI debugging visibility
+
+### [2026-02-20T18:30:00Z] — Task: Wave 1 PRs merged — workspace manager session
+**Focus:** Rebase and squash-merge PRs #36, #37, #38 into main
+**Done:**
+- Rebased all three branches (WT1, WT3, WT5) onto main — resolved work_log conflicts
+- Squash-merged PR #36 (fix/22-25-audio-endpoint → closes #22, #25)
+- Squash-merged PR #37 (fix/23-33-eval-tests → closes #23, #33)
+- Squash-merged PR #38 (feat/32-react-frontend → closes #32)
+- Removed remote branches and worktree git references; physical dirs remain (Windows permission; manual cleanup in MANUAL-TASKS #39)
+**Next:**
+- Manual verification: audio upload, React frontend pages, eval runner CLI (see Issue #39)
+- Wave 2: Issues #30 (mypy), #31 (Cloud Run), #34 (test coverage), #35 (Gemini)
+**Decisions:**
+- All three PRs merged despite Lint FAIL in CI — failures are pre-existing mypy Issue #30, not regressions

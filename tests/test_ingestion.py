@@ -119,6 +119,32 @@ class TestJSONParser:
         assert len(segments) == 2
         assert segments[0].start_time == 1.5
 
+    def test_meetingbank_transcription_format(self) -> None:
+        """parse_json handles canonical MeetingBank format (transcription key, speaker_id field).
+
+        This is the format used in the real MeetingBank dataset and in
+        tests/fixtures/meetingbank/sample_council_meeting.json (Issue #33).
+        The transcription key was added to parsers.py in this PR; this unit test
+        covers that branch directly (separate from the real-fixture test below).
+        """
+        data = json.dumps(
+            {
+                "meeting_id": "MB-TEST-001",
+                "transcription": [
+                    {"speaker_id": "SPEAKER_0", "text": "I call this meeting to order.", "start_time": 2.5, "end_time": 8.3},
+                    {"speaker_id": "SPEAKER_1", "text": "Thank you, Mayor.", "start_time": 9.0, "end_time": 11.2},
+                ],
+                "summary": "Test council meeting.",
+            }
+        )
+        segments = parse_json(data)
+        assert len(segments) == 2
+        assert segments[0].speaker == "SPEAKER_0"
+        assert segments[0].start_time == 2.5
+        assert segments[0].end_time == 8.3
+        assert "order" in segments[0].text
+        assert segments[1].speaker == "SPEAKER_1"
+
     def test_unknown_json_raises(self) -> None:
         data = json.dumps({"something_else": []})
         with pytest.raises(ValueError, match="Unrecognized JSON"):

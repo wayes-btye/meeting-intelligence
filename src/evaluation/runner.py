@@ -344,17 +344,18 @@ def _load_transcripts_from_supabase(meeting_ids: list[str]) -> dict[str, str]:
     transcripts: dict[str, str] = {}
 
     for mid in meeting_ids:
+        # meetings table: PK is `id` (UUID), transcript stored in `raw_transcript`
         result = (
             client.table("meetings")
-            .select("meeting_id, transcript_text")
-            .eq("meeting_id", mid)
+            .select("id, raw_transcript")
+            .eq("id", mid)
             .single()
             .execute()
         )
         if not result.data:
             msg = f"Meeting '{mid}' not found in Supabase. Load it first via the ingest endpoint."
             raise RuntimeError(msg)
-        transcripts[mid] = result.data["transcript_text"]
+        transcripts[mid] = result.data["raw_transcript"]
 
     return transcripts
 

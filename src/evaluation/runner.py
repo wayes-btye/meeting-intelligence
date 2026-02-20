@@ -2,10 +2,22 @@
 
 Ties together test set generation, metric evaluation, cross-check comparison,
 and strategy comparison into a single workflow that produces a markdown report.
+
+Entry point
+-----------
+Run as a module::
+
+    python -m src.evaluation.runner \\
+        --meetings meeting-001 meeting-002 \\
+        --output reports/eval_results \\
+        --strategies naive:semantic speaker_turn:hybrid
+
+Use ``--help`` for full argument documentation.
 """
 
 from __future__ import annotations
 
+import argparse
 import json
 import os
 from datetime import UTC, datetime
@@ -217,3 +229,181 @@ def run_evaluation(
         f.write(report)
 
     return report_path
+
+
+# ── CLI entry point ────────────────────────────────────────────────────────
+
+
+def _build_arg_parser() -> argparse.ArgumentParser:
+    """Build the CLI argument parser for the evaluation runner."""
+    parser = argparse.ArgumentParser(
+        prog="python -m src.evaluation.runner",
+        description=(
+            "Meeting Intelligence Evaluation Runner\n\n"
+            "Orchestrates the full evaluation pipeline: generates or loads a test set,\n"
+            "runs strategy comparison (chunking x retrieval), optionally runs RAG vs\n"
+            "context-stuffing cross-check, and writes a markdown report.\n\n"
+            "Implementation note: metrics are computed using Claude-as-judge -- NOT\n"
+            "RAGAS or DeepEval libraries. See src/evaluation/metrics.py for details."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+
+    parser.add_argument(
+        "--meetings",
+        nargs="+",
+        metavar="MEETING_ID",
+        required=False,
+        default=None,
+        help=(
+            "One or more meeting IDs to evaluate (as stored in Supabase). "
+            "Transcripts are fetched from the database. "
+            "If omitted, a pre-existing --test-set must be supplied."
+        ),
+    )
+    parser.add_argument(
+        "--output",
+        default="reports/eval_results",
+        metavar="OUTPUT_DIR",
+        help=(
+            "Directory where results are written (default: reports/eval_results). "
+            "Created if it does not exist. "
+            "Produces: strategy_results.json, cross_check_results.json, "
+            "evaluation_report.md."
+        ),
+    )
+    parser.add_argument(
+        "--strategies",
+        nargs="+",
+        metavar="CHUNKING:RETRIEVAL",
+        default=None,
+        help=(
+            "Strategy combinations to evaluate, in CHUNKING:RETRIEVAL format. "
+            "Valid chunking values: naive, speaker_turn. "
+            "Valid retrieval values: semantic, hybrid. "
+            "Example: --strategies naive:semantic speaker_turn:hybrid. "
+            "Defaults to all four combinations."
+        ),
+    )
+    parser.add_argument(
+        "--test-set",
+        metavar="PATH",
+        default=None,
+        help=(
+            "Path to an existing test set JSON file. If provided and the file exists, "
+            "test set generation is skipped. If omitted, a new test set is generated "
+            "from the supplied meeting transcripts and saved to data/test_set.json."
+        ),
+    )
+    parser.add_argument(
+        "--no-cross-check",
+        action="store_true",
+        default=False,
+        help="Skip the RAG vs context-stuffing cross-check (faster, no cross-check report).",
+    )
+
+    return parser
+
+
+def _parse_strategy(s: str) -> tuple[str, str]:
+    """Parse a 'chunking:retrieval' strategy string into a tuple.
+
+    Raises ValueError if the format is invalid.
+    """
+    valid_chunking = {"naive", "speaker_turn"}
+    valid_retrieval = {"semantic", "hybrid"}
+
+    if ":" not in s:
+        msg = f"Invalid strategy format {s!r}. Expected CHUNKING:RETRIEVAL, e.g. naive:semantic."
+        raise ValueError(msg)
+
+    chunking, retrieval = s.split(":", 1)
+    if chunking not in valid_chunking:
+        msg = f"Unknown chunking strategy {chunking!r}. Valid: {sorted(valid_chunking)}"
+        raise ValueError(msg)
+    if retrieval not in valid_retrieval:
+        msg = f"Unknown retrieval strategy {retrieval!r}. Valid: {sorted(valid_retrieval)}"
+        raise ValueError(msg)
+
+    return (chunking, retrieval)
+
+
+def _load_transcripts_from_supabase(meeting_ids: list[str]) -> dict[str, str]:
+    """Fetch transcript text for the given meeting IDs from Supabase.
+
+    Returns a mapping of meeting_id -> raw transcript text.
+    Raises RuntimeError if a meeting ID cannot be found.
+
+    # MANUAL TEST REQUIRED: requires live SUPABASE_URL + SUPABASE_KEY in .env
+    """
+    # Import here to avoid forcing DB connection at import time
+    from src.config import settings
+    from supabase import create_client  # type: ignore[import-untyped]
+
+    client = create_client(settings.supabase_url, settings.supabase_key)
+    transcripts: dict[str, str] = {}
+
+    for mid in meeting_ids:
+        # meetings table: PK is `id` (UUID), transcript stored in `raw_transcript`
+        result = (
+            client.table("meetings")
+            .select("id, raw_transcript")
+            .eq("id", mid)
+            .single()
+            .execute()
+        )
+        if not result.data:
+            msg = f"Meeting '{mid}' not found in Supabase. Load it first via the ingest endpoint."
+            raise RuntimeError(msg)
+        transcripts[mid] = result.data["raw_transcript"]
+
+    return transcripts
+
+
+if __name__ == "__main__":
+    import sys
+
+    parser = _build_arg_parser()
+    args = parser.parse_args()
+
+    # Validate: need either --meetings or --test-set
+    if not args.meetings and not args.test_set:
+        parser.error(
+            "Provide at least one of --meetings (to generate a test set from transcripts) "
+            "or --test-set (to reuse an existing test set)."
+        )
+
+    # Parse strategy combinations if provided
+    strategies: list[tuple[str, str]] | None = None
+    if args.strategies:
+        try:
+            strategies = [_parse_strategy(s) for s in args.strategies]
+        except ValueError as exc:
+            parser.error(str(exc))
+
+    # Load transcripts if meeting IDs were supplied
+    transcripts: dict[str, str] = {}
+    if args.meetings:
+        print(f"Fetching transcripts for {len(args.meetings)} meeting(s) from Supabase …")
+        try:
+            transcripts = _load_transcripts_from_supabase(args.meetings)
+        except Exception as exc:
+            print(f"ERROR: Could not load transcripts: {exc}", file=sys.stderr)
+            sys.exit(1)
+
+    print(
+        f"Running evaluation — output dir: {args.output!r}, "
+        f"strategies: {strategies or 'all four'}, "
+        f"cross-check: {not args.no_cross_check}"
+    )
+
+    report_path = run_evaluation(
+        transcripts=transcripts,
+        test_set_path=args.test_set,
+        output_dir=args.output,
+        strategies=strategies,
+        run_cross_check_eval=not args.no_cross_check,
+    )
+
+    print(f"\nEvaluation complete. Report: {report_path}")
+    sys.exit(0)

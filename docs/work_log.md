@@ -78,6 +78,19 @@
 **Decisions:**
 - asyncio.to_thread was simple (2 lines, no new tests) so implemented rather than deferred
 
+### [2026-02-20T10:00:00Z] — Task: Fix eval runner entry point + test coverage (Issues #23, #33)
+**Focus:** TDD: add __main__ to runner.py, real MeetingBank fixture, integration test skeleton
+**Done:**
+- Added argparse __main__ block to src/evaluation/runner.py — `python -m src.evaluation.runner --help` now exits 0
+- Created tests/fixtures/meetingbank/sample_council_meeting.json (synthetic but realistic council meeting in canonical MeetingBank format)
+- Updated src/ingestion/parsers.py to handle MeetingBank `transcription` key format (speaker_id field)
+- Added tests: test_runner_callable_as_module, TestMeetingBankRealFixture (2 tests), test_pipeline_integration.py (3 expensive golden-path tests)
+- Fixed README.md: replaced incorrect RAGAS/DeepEval claim with Claude-as-judge description
+**Next:**
+- Raise PR closing #23 and #33; integration tests require manual run (see test file header)
+**Decisions:**
+- parse_json now handles 3 formats: AssemblyAI utterances, MeetingBank transcription (canonical), internal segments
+
 ### [2026-02-20T02:00:00Z] — Task: Worktree setup — Wave 1 created
 **Focus:** Create Wave 1 worktrees (WT1, WT3, WT5) with comprehensive context files
 **Done:**

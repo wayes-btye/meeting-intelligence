@@ -68,3 +68,14 @@
 - Wave 2 worktrees (WT4, WT6) created after Wave 1 PRs merged
 **Decisions:**
 - Worktree context files committed to main so context is never lost across sessions
+
+### [2026-02-20T02:30:00Z] — Task: Load MeetingBank data into Supabase (Issue #26)
+**Focus:** Populate demo corpus
+**Done:**
+- Ran `python scripts/load_meetingbank.py --max 30` — 30/30 meetings loaded, 0 errors
+- ~250 chunks stored with speaker_turn strategy and OpenAI embeddings
+- Meetings: Denver City Council, Long Beach CC, Boston CC, Seattle City Council
+- Issue #26 closed
+**Next:**
+- Demo corpus is now live — Supabase has real queryable meeting data
+- Run a smoke test query against the data to verify retrieval works

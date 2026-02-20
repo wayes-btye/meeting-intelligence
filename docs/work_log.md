@@ -116,3 +116,15 @@
 **Next:**
 - Demo corpus is now live — Supabase has real queryable meeting data
 - Run a smoke test query against the data to verify retrieval works
+
+### [2026-02-20T10:00:00Z] — Task: React/Next.js frontend — Issue #32
+**Focus:** Build Next.js 14 + shadcn/ui demo frontend with Upload, Chat, Meetings pages
+**Done:**
+- Added CORSMiddleware to src/api/main.py (localhost:3000, Vercel wildcard)
+- Scaffolded /frontend/ with Next.js 14 App Router, shadcn/ui, Tailwind, Playwright e2e
+- Built Upload page (drag-drop ingest + auto-extract), Chat page (query + sources), Meetings browser (paginated + detail)
+**Next:**
+- Restart Claude Code session to load chrome-devtools MCP (.mcp.json added)
+- Run `cd frontend && npm run dev` then verify all 3 pages visually before PR
+**Decisions:**
+- chrome-devtools MCP added to .mcp.json (project scope) for UI debugging visibility

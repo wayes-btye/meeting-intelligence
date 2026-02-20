@@ -56,6 +56,19 @@ docker compose up     # Start all services
 - Type checking: **mypy** (strict mode, type hints required throughout)
 - **Always run `make lint && make test` before pushing to any branch or main**
 
+## Testing Standards
+
+### External API mocking (MANDATORY)
+- **Never make live API calls in regular tests** — mock all external services (AssemblyAI, OpenAI, Supabase, Claude) using `unittest.mock.patch`
+- Mark tests `@pytest.mark.expensive` ONLY when a live API call is truly necessary and unavoidable
+- Tests in `tests/` must pass with no API keys set
+- **After every PR touching an external integration, I will tell you explicitly in chat what needs manual testing before you merge.**
+
+### Scope philosophy for fixes
+- **Implement now** if: ≤5 lines, no new tests needed, behaviour change is safe
+- **Defer** if: requires significant new test coverage, architectural decision, or risk of side effects
+- Either way: leave a code comment explaining the trade-off and reference the issue number
+
 ## Git Workflow
 - **Conventional Commits:** `feat:`, `fix:`, `chore:`, `docs:`, `test:`, `refactor:`
 - **Never work on main directly** — always create feature branches per issue

@@ -54,6 +54,30 @@
 - Streamlit retained as dev tool; React (Next.js) to be built as demo UI (Issue #32)
 - Gemini API to be added for upload-time visual summary (Issue #35)
 
+### [2026-02-20T09:00:00Z] — Task: Fix Issues #22 and #25 (WT1, branch fix/22-25-audio-endpoint)
+**Focus:** TDD fixes: audio upload 500 crash + duplicate GET extract endpoint
+**Done:**
+- Issue #22: ingest.py detects audio extensions, routes to AssemblyAI SDK (key IS set), returns 400 on transcription error — no more UnicodeDecodeError 500
+- Issue #25: removed duplicate `GET /api/meetings/{id}/extract` handler from meetings.py (was masking the correct POST in extraction.py)
+- TDD: wrote two failing tests first, confirmed red, fixed, confirmed green; 110/110 tests pass, ruff clean, no new mypy errors
+**Next:**
+- Raise PR to merge fix/22-25-audio-endpoint → main, close issues #22 and #25
+**Decisions:**
+- ASSEMBLYAI_API_KEY was set so implemented AssemblyAI path (not 501); async blocking is a known limitation (noted in code comment)
+- Duplicate GET was in meetings.py not extraction.py as originally suspected; fixed there
+
+### [2026-02-20T10:00:00Z] — Task: PR review fixes — issues #22 and #25
+**Focus:** Address Claude auto-review + Codex review findings on PR #36
+**Done:**
+- Replaced live AssemblyAI test with two deterministic mocked tests (no network calls)
+- Fixed error semantics: TranscriptStatus.error → 400, infra failures → 503 (not 400)
+- Removed temp file — SDK accepts bytes directly (confirmed via web search); added asyncio.to_thread
+- Added Testing Standards section to CLAUDE.md (mocking policy, manual checklist, scope philosophy)
+**Next:**
+- PR #36 ready for merge; manual audio transcription test needed (see CLAUDE.md § Manual verification)
+**Decisions:**
+- asyncio.to_thread was simple (2 lines, no new tests) so implemented rather than deferred
+
 ### [2026-02-20T02:00:00Z] — Task: Worktree setup — Wave 1 created
 **Focus:** Create Wave 1 worktrees (WT1, WT3, WT5) with comprehensive context files
 **Done:**

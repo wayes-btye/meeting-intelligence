@@ -62,21 +62,7 @@ docker compose up     # Start all services
 - **Never make live API calls in regular tests** — mock all external services (AssemblyAI, OpenAI, Supabase, Claude) using `unittest.mock.patch`
 - Mark tests `@pytest.mark.expensive` ONLY when a live API call is truly necessary and unavoidable
 - Tests in `tests/` must pass with no API keys set
-
-### Manual verification checklist
-Some things cannot be tested automatically. After every PR that touches an integration:
-
-**I will always tell you explicitly what needs manual testing before you merge.** If I don't, ask me.
-
-**Audio transcription (AssemblyAI):**
-```bash
-make api   # start server
-curl -X POST http://localhost:8010/api/ingest \
-  -F "file=@path/to/real_audio.mp3" \
-  -F "title=Manual Test"
-# Expect: 200, meeting_id in response, num_chunks > 0
-curl http://localhost:8010/api/meetings  # meeting should appear with transcript text
-```
+- **After every PR touching an external integration, I will tell you explicitly in chat what needs manual testing before you merge.**
 
 ### Scope philosophy for fixes
 - **Implement now** if: ≤5 lines, no new tests needed, behaviour change is safe

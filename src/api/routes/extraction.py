@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from anthropic import APIStatusError
 from fastapi import APIRouter, HTTPException
 
 from src.api.models import ExtractedItemResponse, ExtractResponse
@@ -33,7 +34,13 @@ async def extract_meeting(meeting_id: str) -> ExtractResponse:
 
     from src.extraction.extractor import extract_and_store
 
-    items = extract_and_store(meeting_id, transcript)
+    try:
+        items = extract_and_store(meeting_id, transcript)
+    except APIStatusError as exc:
+        # Claude API overloaded (529) or other upstream error — return 503 so the
+        # browser receives a proper JSON response with CORS headers intact.
+        # Issue #30-adjacent: unhandled Anthropic errors bypass CORS middleware.
+        raise HTTPException(status_code=503, detail=f"LLM unavailable: {exc.message}") from exc
 
     return ExtractResponse(
         meeting_id=meeting_id,

@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from fastapi import APIRouter
+from anthropic import APIStatusError
+from fastapi import APIRouter, HTTPException
 
 from src.api.models import QueryRequest, QueryResponse
 from src.retrieval.generation import generate_answer
@@ -54,7 +55,13 @@ async def query(request: QueryRequest) -> QueryResponse:
         )
 
     # Generate answer with Claude
-    result = generate_answer(request.question, chunks)
+    try:
+        result = generate_answer(request.question, chunks)
+    except APIStatusError as exc:
+        # Claude API overloaded (529) or other upstream error — return 503 so the
+        # browser receives a proper JSON response with CORS headers intact.
+        # Issue #30-adjacent: unhandled Anthropic errors bypass CORS middleware.
+        raise HTTPException(status_code=503, detail=f"LLM unavailable: {exc.message}") from exc
 
     return QueryResponse(
         answer=result["answer"],

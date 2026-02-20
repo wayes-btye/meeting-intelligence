@@ -27,7 +27,7 @@ def generate_answer(question: str, context_chunks: list[dict]) -> dict:
 
     context = "\n\n".join(context_parts)
 
-    client = Anthropic()  # reads ANTHROPIC_API_KEY from env
+    client = Anthropic(api_key=settings.anthropic_api_key)
     response = client.messages.create(
         model=settings.llm_model,
         max_tokens=1024,

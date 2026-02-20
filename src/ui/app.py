@@ -148,17 +148,13 @@ elif page == "Ask Questions":
                 if sources:
                     st.subheader("Sources")
                     for i, src in enumerate(sources, 1):
-                        with st.expander(
-                            f"Source {i} -- {src.get('meeting_title', 'Unknown meeting')}"
-                        ):
-                            if "speaker" in src:
-                                st.write(f"**Speaker:** {src['speaker']}")
-                            if "timestamp" in src:
-                                st.write(f"**Timestamp:** {src['timestamp']}")
-                            if "similarity" in src:
-                                st.write(f"**Similarity:** {src['similarity']:.4f}")
-                            st.markdown("---")
-                            st.write(src.get("text", ""))
+                        speaker = src.get("speaker") or "Unknown"
+                        sim = src.get("similarity") or src.get("combined_score")
+                        sim_str = f" (similarity: {sim:.4f})" if sim else ""
+                        with st.expander(f"Source {i} -- {speaker}{sim_str}"):
+                            if src.get("start_time"):
+                                st.write(f"**Time:** {src['start_time']:.1f}s")
+                            st.write(src.get("content", ""))
 
 # ---------------------------------------------------------------------------
 # Page: Meetings
@@ -177,40 +173,49 @@ elif page == "Meetings":
             for meeting in meetings_list:
                 meeting_title = meeting.get("title", "Untitled")
                 meeting_id = meeting.get("id", "")
-                date = meeting.get("date", "N/A")
-                num_speakers = meeting.get("num_speakers", "N/A")
-                num_chunks = meeting.get("num_chunks", "N/A")
+                created_at = meeting.get("created_at", "N/A")
+                if created_at and created_at != "N/A":
+                    created_at = created_at[:10]  # Show date only
+                num_speakers = meeting.get("num_speakers") or "N/A"
+                chunk_count = meeting.get("chunk_count", "N/A")
 
                 with st.expander(f"{meeting_title}"):
                     col_a, col_b, col_c = st.columns(3)
-                    col_a.metric("Date", date)
+                    col_a.metric("Date", created_at)
                     col_b.metric("Speakers", str(num_speakers))
-                    col_c.metric("Chunks", str(num_chunks))
+                    col_c.metric("Chunks", str(chunk_count))
 
                     # Fetch detail on expand
                     detail = get_meeting_detail(meeting_id)
                     if detail:
-                        # Action items
-                        action_items = detail.get("action_items", [])
+                        # Extracted items come as a flat list with item_type
+                        extracted = detail.get("extracted_items", [])
+                        action_items = [
+                            i for i in extracted if i.get("item_type") == "action_item"
+                        ]
+                        decisions = [
+                            i for i in extracted if i.get("item_type") == "decision"
+                        ]
+                        topics = [
+                            i for i in extracted if i.get("item_type") == "topic"
+                        ]
+
                         if action_items:
                             st.subheader("Action Items")
                             for item in action_items:
-                                owner = item.get("owner", "Unassigned")
-                                text = item.get("text", "")
-                                st.write(f"- **{owner}:** {text}")
+                                assignee = item.get("assignee", "Unassigned")
+                                content = item.get("content", "")
+                                st.write(f"- **{assignee}:** {content}")
 
-                        # Decisions
-                        decisions = detail.get("decisions", [])
                         if decisions:
                             st.subheader("Decisions")
                             for dec in decisions:
-                                st.write(f"- {dec.get('text', '')}")
+                                st.write(f"- {dec.get('content', '')}")
 
-                        # Topics
-                        topics = detail.get("topics", [])
                         if topics:
                             st.subheader("Topics")
-                            st.write(", ".join(topics))
+                            topic_names = [t.get("content", "") for t in topics]
+                            st.write(", ".join(topic_names))
 
                         if not action_items and not decisions and not topics:
                             st.write("No extracted items available yet.")

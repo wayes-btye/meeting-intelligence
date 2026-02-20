@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import os
 from typing import TYPE_CHECKING
 
+from src.config import settings
 from supabase import Client, create_client
 
 if TYPE_CHECKING:
@@ -12,11 +12,8 @@ if TYPE_CHECKING:
 
 
 def get_supabase_client() -> Client:
-    """Create and return a Supabase client from environment variables."""
-    return create_client(
-        os.getenv("SUPABASE_URL", ""),
-        os.getenv("SUPABASE_KEY", ""),
-    )
+    """Create and return a Supabase client from settings."""
+    return create_client(settings.supabase_url, settings.supabase_key)
 
 
 def store_meeting(

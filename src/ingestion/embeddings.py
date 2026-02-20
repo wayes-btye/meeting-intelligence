@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from openai import OpenAI
 
+from src.config import settings
 from src.ingestion.models import Chunk
 
 
@@ -17,7 +18,7 @@ def embed_texts(texts: list[str], model: str = "text-embedding-3-small") -> list
     Returns:
         A list of embedding vectors (one per input text).
     """
-    client = OpenAI()  # reads OPENAI_API_KEY from env
+    client = OpenAI(api_key=settings.openai_api_key)
     response = client.embeddings.create(input=texts, model=model)
     return [item.embedding for item in response.data]
 

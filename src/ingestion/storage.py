@@ -4,9 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from supabase import Client, create_client
-
 from src.config import settings
+from supabase import Client, create_client
 
 if TYPE_CHECKING:
     from src.ingestion.models import Chunk

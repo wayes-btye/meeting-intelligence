@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel
 
 from src.pipeline_config import ChunkingStrategy, RetrievalStrategy
@@ -33,7 +35,7 @@ class QueryResponse(BaseModel):
     answer: str
     sources: list[SourceChunk]
     model: str | None = None
-    usage: dict | None = None
+    usage: dict[str, Any] | None = None
 
 
 class MeetingSummary(BaseModel):
@@ -60,7 +62,7 @@ class MeetingDetail(BaseModel):
     raw_transcript: str | None = None
     summary: str | None = None
     chunks: list[SourceChunk] = []
-    extracted_items: list[dict] = []
+    extracted_items: list[dict[str, Any]] = []
 
 
 class IngestResponse(BaseModel):

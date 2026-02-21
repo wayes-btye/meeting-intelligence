@@ -5,7 +5,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import Any
+from typing import Any, cast
 
 from src.ingestion.storage import get_supabase_client
 
@@ -150,7 +150,8 @@ def lookup_extracted_items(
 
     query = query.order("created_at", desc=True)
     result = query.execute()
-    return result.data  # type: ignore[no-any-return]
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    return cast(list[dict[str, Any]], result.data)
 
 
 def format_structured_response(items: list[dict[str, Any]], item_type: str | None) -> str:

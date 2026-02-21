@@ -85,13 +85,20 @@ PORT=8080 bash scripts/start-api.sh
 ```
 
 ### Step 2 — React frontend
+
+**IMPORTANT — Windows / Next.js 14 known issue:** `npm run dev` (dev mode) has a two-pass compilation bug on Windows where the client-side assets (CSS, `main-app.js`) silently fail to register in the in-memory cache, causing 404s and unstyled/broken pages. **Always use the production build for local testing:**
+
 ```bash
 cd /c/meeting-intelligence/frontend
-npm run dev
+npm run build && npm start
 # Starts on http://localhost:3000
 ```
 
-Before running `npm run dev` for the first time after a `git pull`, always run `npm install` first — `git pull` updates `package.json` but does not install new packages automatically.
+After any code change, re-run `npm run build && npm start` (kill the existing server first with `cmd //c "taskkill /F /IM node.exe"`).
+
+`npm run dev` may work fine on macOS/Linux but is unreliable on Windows for this project.
+
+Before running for the first time after a `git pull`, always run `npm install` first — `git pull` updates `package.json` but does not install new packages automatically.
 
 ### Step 3 — Verify both are up
 ```bash

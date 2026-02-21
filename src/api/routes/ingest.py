@@ -18,13 +18,18 @@ from src.pipeline_config import ChunkingStrategy
 
 router = APIRouter()
 
-# 50 MB upload limit
+# 50 MB upload limit (compressed upload)
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
+
+# Zip bomb protection: limits applied per-member and across all members
+MAX_ZIP_MEMBERS = 200
+MAX_ZIP_MEMBER_BYTES = 100 * 1024 * 1024   # 100 MB per individual file
+MAX_ZIP_TOTAL_BYTES = 500 * 1024 * 1024    # 500 MB total expanded across all members
 
 # Extensions treated as audio — routed to AssemblyAI transcription
 AUDIO_EXTENSIONS = {"mp3", "wav", "m4a", "mp4", "ogg", "flac"}
 
-# Extensions accepted as transcript files inside zip archives
+# Extensions accepted as plain-text transcript files
 TRANSCRIPT_EXTENSIONS = {"vtt", "txt", "json"}
 
 
@@ -77,11 +82,13 @@ async def ingest(
     .m4a, .mp4, .ogg, .flac), and .zip archives containing transcript files.
 
     - Text/audio: returns IngestResponse (single meeting).
-    - Zip archive: extracts each .vtt/.txt/.json and ingests as a separate meeting;
-      returns BatchIngestResponse with all meeting IDs. Title per sub-meeting is
-      ``"{zip_stem}/{filename_without_ext}"`` (e.g. ``"batch_upload/council_jan"``).
-      Audio files are transcribed via AssemblyAI when ASSEMBLYAI_API_KEY is configured;
-      otherwise a 501 is returned for audio-only uploads.
+    - Zip archive: extracts each .vtt/.txt/.json (transcript) and .mp3/.wav/.m4a/.mp4/.ogg/.flac
+      (audio) file and ingests each as a separate meeting. Audio files inside a zip require
+      ASSEMBLYAI_API_KEY; if not configured, those entries are recorded in ``errors`` and skipped
+      (transcript files in the same zip are still ingested). Returns BatchIngestResponse with all
+      meeting IDs. Title per sub-meeting is ``"{zip_stem}/{filename_without_ext}"``
+      (e.g. ``"batch_upload/council_jan"``). A 501 is returned only for audio-only single uploads
+      without a key.
 
     Issue #34: zip bulk upload + Teams VTT support.
     """
@@ -151,11 +158,18 @@ def _ingest_zip(
     base_title: str,
     strategy: ChunkingStrategy,
 ) -> BatchIngestResponse:
-    """Ingest all transcript files from a zip archive.
+    """Ingest all transcript and audio files from a zip archive.
 
-    Each .vtt/.txt/.json inside the zip is ingested as a separate meeting.
+    Each .vtt/.txt/.json is decoded as text; each audio file (.mp3/.wav/etc.) is
+    transcribed via AssemblyAI (skipped with an error entry if no API key is configured).
+    Non-supported files are silently skipped.
+
+    Zip bomb protection: rejects archives exceeding MAX_ZIP_MEMBERS members, any individual
+    member exceeding MAX_ZIP_MEMBER_BYTES uncompressed, or total expansion exceeding
+    MAX_ZIP_TOTAL_BYTES. Checks use ZipInfo.file_size (the declared uncompressed size),
+    which is fast and avoids reading before validating.
+
     Title pattern: ``"{zip_stem}/{filename_without_ext}"``.
-    Non-transcript files are silently skipped.
 
     Args:
         raw: Raw zip file bytes.
@@ -167,7 +181,6 @@ def _ingest_zip(
         BatchIngestResponse with counts and IDs.
     """
     zip_stem = zip_filename.rsplit(".", 1)[0] if "." in zip_filename else (base_title or "batch")
-
     format_map = {"vtt": "vtt", "txt": "text", "json": "json"}
     meeting_ids: list[str] = []
     errors: list[str] = []
@@ -178,26 +191,68 @@ def _ingest_zip(
         raise HTTPException(status_code=400, detail=f"Invalid zip file: {exc}") from exc
 
     with zf:
-        for member in zf.infolist():
-            # Skip directories and hidden/system files
-            if member.is_dir():
-                continue
+        members = [m for m in zf.infolist() if not m.is_dir()]
+
+        # Zip bomb guard: member count
+        if len(members) > MAX_ZIP_MEMBERS:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Zip contains {len(members)} files; maximum is {MAX_ZIP_MEMBERS}.",
+            )
+
+        # Zip bomb guard: declared total uncompressed size
+        total_uncompressed = sum(m.file_size for m in members)
+        if total_uncompressed > MAX_ZIP_TOTAL_BYTES:
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    f"Zip would expand to {total_uncompressed // (1024 * 1024)} MB; "
+                    f"maximum is {MAX_ZIP_TOTAL_BYTES // (1024 * 1024)} MB."
+                ),
+            )
+
+        for member in members:
             member_name = member.filename
             member_ext = member_name.rsplit(".", 1)[-1].lower() if "." in member_name else ""
-            if member_ext not in TRANSCRIPT_EXTENSIONS:
-                continue  # silently skip non-transcript files
+
+            is_transcript = member_ext in TRANSCRIPT_EXTENSIONS
+            is_audio = member_ext in AUDIO_EXTENSIONS
+            if not is_transcript and not is_audio:
+                continue  # silently skip unsupported files (images, PDFs, etc.)
+
+            # Zip bomb guard: per-member declared uncompressed size
+            if member.file_size > MAX_ZIP_MEMBER_BYTES:
+                errors.append(
+                    f"{member_name}: file too large ({member.file_size // (1024 * 1024)} MB, "
+                    f"max {MAX_ZIP_MEMBER_BYTES // (1024 * 1024)} MB)"
+                )
+                continue
 
             # Derive per-meeting title: "{zip_stem}/{filename_without_ext}"
-            base_name = member_name.rsplit("/", 1)[-1]  # strip any zip-internal directories
+            base_name = member_name.rsplit("/", 1)[-1]  # strip any zip-internal path
             file_stem = base_name.rsplit(".", 1)[0] if "." in base_name else base_name
             meeting_title = f"{zip_stem}/{file_stem}"
 
             try:
                 file_bytes = zf.read(member_name)
-                content = file_bytes.decode("utf-8")
-                transcript_format = format_map[member_ext]
+
+                if is_audio:
+                    if not settings.assemblyai_api_key:
+                        errors.append(
+                            f"{member_name}: audio transcription not configured "
+                            "(set ASSEMBLYAI_API_KEY to enable audio files in zips)"
+                        )
+                        continue
+                    content = _transcribe_audio(file_bytes)
+                    transcript_format = "text"
+                else:
+                    content = file_bytes.decode("utf-8")
+                    transcript_format = format_map[member_ext]
+
                 meeting_id = ingest_transcript(content, transcript_format, meeting_title, strategy)
                 meeting_ids.append(meeting_id)
+            except HTTPException as exc:
+                errors.append(f"{member_name}: {exc.detail}")
             except Exception as exc:
                 errors.append(f"{member_name}: {exc}")
 

@@ -1,15 +1,16 @@
 "use client";
 
 // Upload Page — POST /api/ingest (chunking_strategy), then POST /api/meetings/{id}/extract
+// Accepts .vtt/.txt/.json (single meeting) and .zip (batch — multiple meetings, no auto-extract).
 // MANUAL VISUAL CHECK REQUIRED:
-// 1. Start API: uvicorn src.api.main:app --port 8002 (from repo root)
-// 2. Start frontend: cd frontend && npm run dev
+// 1. Start API: PORT=8080 bash scripts/start-api.sh (WT8)
+// 2. Start frontend: cd frontend && npm run dev -- --turbo
 // 3. Visit http://localhost:3000
-// 4. Drag a .vtt/.txt/.json file onto the drop zone, set a title, click Upload
-// 5. Expect: progress bar during upload, then extraction results (action items, decisions, topics)
+// 4. Drag a .vtt/.txt/.json or .zip onto the drop zone, set a title, click Upload
+// 5. Single: expect extraction results. Zip: expect batch summary with N meetings + any errors.
 
 import { useCallback, useRef, useState } from "react";
-import { api, type ExtractResponse, type IngestResponse } from "@/lib/api";
+import { api, type BatchIngestResponse, type ExtractResponse, type IngestResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,12 +20,25 @@ import { Progress } from "@/components/ui/progress";
 
 type Phase = "idle" | "uploading" | "extracting" | "done" | "error";
 
-const ACCEPTED_EXTS = [".vtt", ".txt", ".json"];
+const ACCEPTED_EXTS = [".vtt", ".txt", ".json", ".zip"];
 
-interface Result {
+/** Type guard: distinguishes a zip BatchIngestResponse from a single IngestResponse. */
+function isBatchResponse(r: IngestResponse | BatchIngestResponse): r is BatchIngestResponse {
+  return "meetings_ingested" in r;
+}
+
+interface SingleResult {
+  kind: "single";
   ingest: IngestResponse;
   extraction: ExtractResponse;
 }
+
+interface BatchResult {
+  kind: "batch";
+  ingest: BatchIngestResponse;
+}
+
+type Result = SingleResult | BatchResult;
 
 export default function UploadPage() {
   const [file, setFile] = useState<File | null>(null);
@@ -43,7 +57,7 @@ export default function UploadPage() {
     const dropped = e.dataTransfer.files[0];
     if (!dropped) return;
     if (!ACCEPTED_EXTS.some((ext) => dropped.name.endsWith(ext))) {
-      setError("Unsupported file type. Drop a .vtt, .txt, or .json file.");
+      setError("Unsupported file type. Drop a .vtt, .txt, .json, or .zip file.");
       return;
     }
     setFile(dropped);
@@ -59,16 +73,23 @@ export default function UploadPage() {
     setProgress(20);
 
     try {
-      // Step 1: ingest transcript
+      // Step 1: ingest transcript(s)
       const ingest = await api.ingest(file, title || file.name, chunking);
       setProgress(60);
-      setPhase("extracting");
 
-      // Step 2: auto-run extraction immediately after ingest
-      const extraction = await api.extract(ingest.meeting_id);
-      setProgress(100);
-      setPhase("done");
-      setResult({ ingest, extraction });
+      if (isBatchResponse(ingest)) {
+        // Zip upload — multiple meetings; skip auto-extraction, show batch summary
+        setProgress(100);
+        setPhase("done");
+        setResult({ kind: "batch", ingest });
+      } else {
+        // Single file — run extraction immediately after ingest
+        setPhase("extracting");
+        const extraction = await api.extract(ingest.meeting_id);
+        setProgress(100);
+        setPhase("done");
+        setResult({ kind: "single", ingest, extraction });
+      }
     } catch (err) {
       setPhase("error");
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -105,7 +126,7 @@ export default function UploadPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".vtt,.txt,.json"
+            accept=".vtt,.txt,.json,.zip"
             className="hidden"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />
@@ -121,7 +142,7 @@ export default function UploadPage() {
             <div className="text-center">
               <p className="font-medium">Drop transcript here</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Accepts .vtt, .txt, .json
+                Accepts .vtt, .txt, .json, .zip
               </p>
             </div>
           )}
@@ -167,7 +188,7 @@ export default function UploadPage() {
             <Progress value={progress} className="h-2" />
             <p className="text-sm text-muted-foreground">
               {phase === "uploading"
-                ? "Processing transcript…"
+                ? "Processing…"
                 : "Extracting action items, decisions, topics…"}
             </p>
           </div>
@@ -191,14 +212,56 @@ export default function UploadPage() {
         </Button>
       </form>
 
-      {/* Results */}
-      {result && (
+      {/* Results — batch zip upload */}
+      {result?.kind === "batch" && (
+        <div className="space-y-4" data-testid="batch-results">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base">
+                Batch Upload Complete
+                <Badge variant="secondary">
+                  {result.ingest.meetings_ingested} meetings
+                </Badge>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <ul className="space-y-1">
+                {result.ingest.meeting_ids.map((id) => (
+                  <li key={id} className="text-xs font-mono text-muted-foreground">
+                    {id}
+                  </li>
+                ))}
+              </ul>
+              {result.ingest.errors.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium text-destructive mb-1">
+                    Skipped ({result.ingest.errors.length}):
+                  </p>
+                  <ul className="space-y-0.5">
+                    {result.ingest.errors.map((err, i) => (
+                      <li key={i} className="text-xs text-destructive">
+                        {err}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                View all meetings in the Meetings tab to query or explore them.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Results — single file upload */}
+      {result?.kind === "single" && (
         <div className="space-y-6" data-testid="extraction-results">
           {/* Ingest summary */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-base">
-                ✅ Ingestion Complete
+                Ingestion Complete
                 <Badge variant="secondary">
                   {result.ingest.num_chunks} chunks
                 </Badge>
@@ -224,7 +287,7 @@ export default function UploadPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  ✅ Action Items ({result.extraction.action_items.length})
+                  Action Items ({result.extraction.action_items.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -251,7 +314,7 @@ export default function UploadPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  🏛️ Decisions ({result.extraction.decisions.length})
+                  Decisions ({result.extraction.decisions.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -274,7 +337,7 @@ export default function UploadPage() {
             <Card>
               <CardHeader>
                 <CardTitle className="text-base">
-                  🏷️ Topics ({result.extraction.topics.length})
+                  Topics ({result.extraction.topics.length})
                 </CardTitle>
               </CardHeader>
               <CardContent>

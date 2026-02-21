@@ -36,6 +36,13 @@ export interface IngestResponse {
   chunking_strategy: string;
 }
 
+/** Returned by POST /api/ingest when a .zip file is uploaded. */
+export interface BatchIngestResponse {
+  meetings_ingested: number;
+  meeting_ids: string[];
+  errors: string[];
+}
+
 export interface ExtractedItem {
   item_type: string;
   content: string;
@@ -81,12 +88,13 @@ export const api = {
   getMeeting: (id: string) => apiFetch<MeetingDetail>(`/api/meetings/${id}`),
 
   // chunking_strategy: "naive" | "speaker_turn"
+  // Returns IngestResponse for single files, BatchIngestResponse for .zip uploads.
   ingest: (file: File, title: string, chunkingStrategy: string) => {
     const form = new FormData();
     form.append("file", file);
     form.append("title", title);
     form.append("chunking_strategy", chunkingStrategy);
-    return apiFetch<IngestResponse>("/api/ingest", { method: "POST", body: form });
+    return apiFetch<IngestResponse | BatchIngestResponse>("/api/ingest", { method: "POST", body: form });
   },
 
   extract: (meetingId: string) =>

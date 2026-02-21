@@ -4,6 +4,15 @@ import { NextResponse, type NextRequest } from "next/server";
 // Middleware runs on the edge — refresh the session cookie on every request,
 // then redirect unauthenticated users to /login for protected routes.
 export async function middleware(request: NextRequest) {
+  // Fail safe if env vars are missing — prevents unhandled 500s on fresh deployments (#52)
+  if (
+    !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+    !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  ) {
+    console.error("Supabase env vars missing — auth middleware disabled");
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -37,6 +46,11 @@ export async function middleware(request: NextRequest) {
     const loginUrl = request.nextUrl.clone();
     loginUrl.pathname = "/login";
     return NextResponse.redirect(loginUrl);
+  }
+
+  // Redirect already-authenticated users away from /login (#52)
+  if (user && request.nextUrl.pathname === "/login") {
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return supabaseResponse;

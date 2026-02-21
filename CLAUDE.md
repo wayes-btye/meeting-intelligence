@@ -3,7 +3,9 @@
 ## Stack
 - **Language:** Python 3.11+
 - **Backend:** FastAPI (API server)
-- **Frontend:** Streamlit (thin client, calls FastAPI over HTTP)
+- **Primary UI:** React/Next.js 14 (`frontend/`) — production frontend, deployed to Vercel
+- **Dev UI:** Streamlit (`src/ui/`) — lightweight secondary UI, maintained for dev/experimentation
+- **API Explorer:** FastAPI Swagger at `/docs`, ReDoc at `/redoc` — always available when API is running
 - **Database:** Supabase (Postgres + pgvector for vectors, metadata, structured data)
 - **LLM:** Claude API (direct SDK calls — no LangChain/LlamaIndex)
 - **Embeddings:** OpenAI text-embedding-3-small (1536 dimensions)
@@ -14,11 +16,28 @@
 
 ## Architecture
 Three separate services via Docker Compose:
-- `api` — FastAPI backend (src/api/)
-- `ui` — Streamlit frontend (src/ui/)
+- `api` — FastAPI backend (`src/api/`)
+- `ui` — Streamlit dev UI (`src/ui/`)
 - `db` — Supabase (external, configured via env vars)
 
+React frontend (`frontend/`) is a standalone Next.js app — run separately with `npm run dev`.
+
 Pipeline: Ingest -> Chunk -> Embed -> Store -> Retrieve -> Generate
+
+## UI Environments
+
+Three UIs are maintained. React is the canonical production UI; the others are dev/exploration tools.
+
+| UI | Path | Start command | Default URL | Purpose |
+|----|------|---------------|-------------|---------|
+| **React/Next.js** (primary) | `frontend/` | `cd frontend && npm run dev` | `http://localhost:3000` | Production UI — upload, chat, meetings list. Deployed to Vercel. |
+| **Streamlit** (dev) | `src/ui/app.py` | `make streamlit` | `http://localhost:8501` | Lightweight dev UI — maintained for rapid prototyping and experimentation. No npm required. |
+| **API Explorer** (dev) | `src/api/` | `make api` (always on) | `http://localhost:8000/docs` | FastAPI auto-generated Swagger UI. Use `/redoc` for ReDoc view. Useful for testing endpoints directly. |
+
+**Maintenance policy:**
+- React: all new user-facing features go here
+- Streamlit: keep working, update when backend API changes; good for trying new ideas before building React components
+- API docs: no maintenance needed — auto-generated from route definitions
 
 ## Project Structure
 ```
@@ -106,14 +125,50 @@ pip install -r requirements.txt
 | Folder | `meeting-intelligence-wt{N}-issue-{XXX}` | `meeting-intelligence-wt1-issue-1` |
 | Branch | `feat/issue-number-description` | `feat/1-foundation` |
 
+### Worktree Context Files (`docs/worktrees/`)
+
+Every worktree has a context file in `docs/worktrees/`. The filename prefix shows its current state — visible at a glance in any file explorer:
+
+| Prefix | Meaning |
+|--------|---------|
+| `PLANNED_` | Issue raised, worktree not yet created |
+| `ACTIVE_` | Worktree created and work in progress |
+| `MERGED_` | PR merged, worktree removed |
+
+**Lifecycle:**
+1. When an issue is queued for a worktree, create `PLANNED_wt{N}-issue-{XXX}.md` with the brief context.
+2. When the worktree is created, rename to `ACTIVE_` and update the `**Status:**` line in the file.
+3. When the PR is merged and the worktree is removed, rename to `MERGED_` and record the PR number and date on the status line.
+
+The second line of every context file is a `**Status:**` badge — the single most useful line when you open the file.
+
 ### API Port Allocation (if running services in worktrees)
-- Main workspace: API :8000, Streamlit :8501
-- Worktree 1: API :8010, Streamlit :8511
-- Worktree 2: API :8020, Streamlit :8521
-- Worktree 3: API :8030, Streamlit :8531
+
+Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefile respects these env vars (defaults to 8000/8501).
+
+| Worktree | API port | Streamlit port |
+|----------|----------|----------------|
+| Main workspace | :8000 | :8501 |
+| WT1 (issue-22/25) | :8010 | :8511 |
+| WT2 | :8020 | :8521 |
+| WT3 (issue-23/33) | :8030 | :8531 |
+| WT4 | :8040 | :8541 |
+| WT5 (issue-32) | :8050 | :8551 |
+| WT6 (issue-30) | :8060 | :8561 |
+| WT7 (issue-31) | :8070 | :8571 |
+| WT8 (issue-34) | :8080 | :8581 |
+| WT9 (issue-35) | :8090 | :8591 |
+
+Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 
 ### Shared Database Caution
-All worktrees share the same Supabase project. Schema migrations in one worktree affect all others. Coordinate schema changes — only one worktree should run migrations at a time.
+All worktrees share the same Supabase project. Schema migrations applied in any worktree take effect immediately and permanently for the entire project.
+
+**CRITICAL — migrations are the main workspace's responsibility:**
+- **Never apply a migration from a worktree without explicit user instruction.** If your branch requires a schema change, write the migration file and stop — do not run `supabase db push`. Ask the user: "This branch requires a migration. Should I apply it now, or will the main workspace handle it?"
+- **The main workspace applies all migrations**, after checking that no other open worktree has a conflicting schema change pending. Before applying, check open PRs and active worktrees for any branches that also touch the schema.
+- **Migrations are one-at-a-time and sequential.** Two worktrees must never push schema changes concurrently. If unsure whether another branch is mid-migration, ask before proceeding.
+- **Migration commands:** `supabase migration new <name>` to create, `supabase db push --linked` to apply. Never use the Supabase MCP `apply_migration` tool in production — it bypasses the migration tracking table.
 
 ### Remove When Done (after PR merged)
 ```bash
@@ -164,8 +219,8 @@ git branch -d feat/1-foundation
 - **Best practice**: Verify current API docs before implementing integrations
 
 ### Playwright MCP
-- **Use for**: UI testing and validation after Streamlit changes
-- **Best practice**: Take screenshots before/after UI changes
+- **Use for**: UI testing and validation after React or Streamlit changes
+- **Best practice**: Take screenshots before/after UI changes; use chrome-devtools MCP for React (Next.js), Playwright for broader browser automation
 
 ## PRD Maintenance
 - All new features must be added to `docs/PRD.md` with ID, priority, and status before implementation.

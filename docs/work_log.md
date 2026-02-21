@@ -143,6 +143,32 @@
 **Decisions:**
 - All three PRs merged despite Lint FAIL in CI — failures are pre-existing mypy Issue #30, not regressions
 
+### [2026-02-20T19:30:00Z] — Task: Post-merge verification + Wave 2 setup
+**Focus:** UI smoke test, Supabase cleanup, Wave 2 worktrees
+**Done:**
+- Fixed ruff errors in test_pipeline_integration.py (RUF100, SIM117×2); CI lint now passes
+- Ran 3/3 expensive integration tests — all passed; Supabase cleaned of test data
+- UI smoke tested via chrome-devtools MCP: Upload/Chat/Meetings pages all load, API online indicator working, meetings table shows 32 meetings
+- Fixed unhandled Anthropic APIStatusError (529) in extract + query routes — now returns HTTP 503 with CORS headers
+- Created Wave 2 worktrees: wt6(#30), wt7(#31), wt8(#34), wt9(#35)
+**Next:**
+- Open Claude Code in each Wave 2 worktree and start work (priority: #30 mypy first)
+- Worktree cleanup: delete C:\meeting-intelligence-wt{1,3,5}-issue-* folders in Explorer
+**Decisions:**
+- Wave 2 uses separate worktrees per issue (not one combined) — independent scope, parallelisable
+
+### [2026-02-21T00:00:00Z] — Task: Fix mypy type errors (Issue #30)
+**Focus:** Resolve all 218 mypy errors across src/ so `make lint` passes fully
+**Done:**
+- Fixed all 5 error categories: TextBlock narrowing, Supabase JSON casts, CountMethod import, bare dict params, misc annotations
+- Updated test helper `_mock_claude_response` to return real `TextBlock` (not MagicMock)
+- Result: `mypy src/` 0 errors, `ruff` clean, 115 tests pass — opened PR #40
+**Next:**
+- Merge PR #40 after review; then tackle #31 (Cloud Run), #34 (test coverage), #35 (Gemini)
+**Decisions:**
+- Used `cast(list[dict[str, Any]], result.data)` for Supabase returns — proper fix, not band-aid
+- Used `postgrest.CountMethod.exact` enum value for count= arg — proper fix
+
 ### [2026-02-21T00:00:00Z] — Task: Cloud Run + Vercel deployment (Issue #31)
 **Focus:** Wire up auto-deploy for API (Cloud Run) and frontend (Vercel)
 **Done:**

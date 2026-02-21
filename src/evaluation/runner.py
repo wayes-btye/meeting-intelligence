@@ -21,6 +21,7 @@ import argparse
 import json
 import os
 from datetime import UTC, datetime
+from typing import Any, cast
 
 from src.evaluation.compare_strategies import (
     STRATEGY_COMBINATIONS,
@@ -87,7 +88,7 @@ def _format_test_set_summary(questions: list[TestQuestion]) -> str:
     return "\n".join(lines)
 
 
-def _format_cross_check_section(summary: dict) -> str:
+def _format_cross_check_section(summary: dict[str, Any]) -> str:
     """Format the cross-check results as markdown."""
     if summary.get("total", 0) == 0:
         return "No cross-check results available.\n"
@@ -121,7 +122,7 @@ def _format_cross_check_section(summary: dict) -> str:
 def generate_report(
     questions: list[TestQuestion],
     strategy_results: list[StrategyResult],
-    cross_check_summary: dict | None = None,
+    cross_check_summary: dict[str, Any] | None = None,
 ) -> str:
     """Generate a full markdown evaluation report.
 
@@ -213,7 +214,7 @@ def run_evaluation(
         json.dump(strategy_data, f, indent=2)
 
     # Step 3: Cross-check (optional)
-    cross_check_summary: dict | None = None
+    cross_check_summary: dict[str, Any] | None = None
     if run_cross_check_eval:
         cc_results = run_cross_check(
             questions, transcripts, retrieval_strategy_for_cross_check
@@ -338,7 +339,7 @@ def _load_transcripts_from_supabase(meeting_ids: list[str]) -> dict[str, str]:
     """
     # Import here to avoid forcing DB connection at import time
     from src.config import settings
-    from supabase import create_client  # type: ignore[import-untyped]
+    from supabase import create_client
 
     client = create_client(settings.supabase_url, settings.supabase_key)
     transcripts: dict[str, str] = {}
@@ -355,7 +356,9 @@ def _load_transcripts_from_supabase(meeting_ids: list[str]) -> dict[str, str]:
         if not result.data:
             msg = f"Meeting '{mid}' not found in Supabase. Load it first via the ingest endpoint."
             raise RuntimeError(msg)
-        transcripts[mid] = result.data["raw_transcript"]
+        # Supabase .single() returns JSON; cast to dict to index by string key. (#30)
+        row = cast(dict[str, Any], result.data)
+        transcripts[mid] = row["raw_transcript"]
 
     return transcripts
 

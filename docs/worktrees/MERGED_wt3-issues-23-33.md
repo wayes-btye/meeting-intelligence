@@ -1,4 +1,5 @@
 # Worktree WT3 — Issues #23 and #33
+**Status:** `MERGED` — PR #37 merged 2026-02-20, worktree removed
 **Branch:** `fix/23-33-eval-tests`
 **Created from:** main @ 771203b
 

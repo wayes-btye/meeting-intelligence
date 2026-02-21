@@ -81,9 +81,17 @@ cd frontend && npm run build && npm start
 
 This is reliable but requires a rebuild after each code change (no HMR). Documented in CLAUDE.md `## Starting the Dev Environment`.
 
-## Recommendation
+## Resolution — Confirmed Fix
 
-Try **Option 1 first** (`--turbo` flag) — 2 minutes of effort, no package changes. If that works, update `package.json` scripts to use Turbopack. If not, **Option 3** (Defender exclusion) is also worth doing regardless. **Option 2** (Next.js 15 upgrade) is the proper long-term fix but warrants a dedicated issue and PR.
+**`npm run dev -- --turbo` works on Windows.** Tested 2026-02-21:
+- Turbopack uses a different CSS output path (`static/chunks/app_6cac50._.css`) vs webpack (`static/css/app/layout.css`)
+- The webpack path is what 404s; Turbopack's path serves correctly (HTTP 200)
+- Full Tailwind CSS applied, hot reload functional
+- CLAUDE.md updated to instruct `npm run dev -- --turbo` as the standard local dev command
+
+The `npm run build && npm start` fallback remains documented for edge cases.
+
+**Option 2** (Next.js 15 upgrade, where Turbopack is the default) remains the proper long-term fix.
 
 ---
 

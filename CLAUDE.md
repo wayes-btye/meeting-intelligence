@@ -86,19 +86,17 @@ PORT=8080 bash scripts/start-api.sh
 
 ### Step 2 — React frontend
 
-**IMPORTANT — Windows / Next.js 14 known issue:** `npm run dev` (dev mode) has a two-pass compilation bug on Windows where the client-side assets (CSS, `main-app.js`) silently fail to register in the in-memory cache, causing 404s and unstyled/broken pages. **Always use the production build for local testing:**
+**Windows note:** `npm run dev` (webpack bundler) has a bug on Windows where CSS and core chunks 404 in the browser. Use Turbopack instead — it works correctly and is faster:
 
 ```bash
 cd /c/meeting-intelligence/frontend
-npm run build && npm start
-# Starts on http://localhost:3000
+npm run dev -- --turbo
+# Starts on http://localhost:3000 with hot reload
 ```
 
-After any code change, re-run `npm run build && npm start` (kill the existing server first with `cmd //c "taskkill /F /IM node.exe"`).
-
-`npm run dev` may work fine on macOS/Linux but is unreliable on Windows for this project.
-
 Before running for the first time after a `git pull`, always run `npm install` first — `git pull` updates `package.json` but does not install new packages automatically.
+
+If Turbopack has issues, fallback: `npm run build && npm start` (no hot reload, rebuild required after each change).
 
 ### Step 3 — Verify both are up
 ```bash
@@ -346,6 +344,10 @@ Project-specific slash commands available as `/project:<name>`:
 - `/project:status` — open issues, test status, mypy errors
 - `/project:ingest-test` — run a transcript through the full pipeline with verification
 - `/project:smoke-test` — guided walkthrough of all main user flows
+
+## Web Search is Mandatory, Not Optional
+
+When something isn't working, behaviour is unexpected, a library API looks unfamiliar, or you're about to implement something non-trivial — **search first**. Training data goes stale fast; the web doesn't. Use `WebSearch` for error messages, library docs, community bug reports, and "is this a known issue?" checks. Do this proactively and frequently, not as a last resort.
 
 ## Key Design Decisions
 - Direct Claude API calls (no orchestration frameworks) — understand what happens under the hood

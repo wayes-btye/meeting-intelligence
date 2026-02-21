@@ -25,8 +25,15 @@ def _parse_vtt_timestamp(ts: str) -> float:
 def parse_vtt(content: str) -> list[TranscriptSegment]:
     """Parse a WebVTT file into transcript segments.
 
-    Handles timestamps like ``00:01:23.456 --> 00:01:30.789`` and optional
-    speaker labels in the form ``Speaker 1: Hello``.
+    Handles timestamps like ``00:01:23.456 --> 00:01:30.789`` and speaker labels
+    in two formats:
+
+    - Standard colon-style: ``Speaker 1: Hello``
+    - Microsoft Teams inline voice tags: ``<v SpeakerName>Hello</v>``
+      (Issue #34 — Teams VTT format support)
+
+    Teams ``<v SpeakerName>`` tags take precedence over colon-style labels when
+    both are present in the same cue (unlikely in practice, but Teams format wins).
     """
     segments: list[TranscriptSegment] = []
 
@@ -35,6 +42,9 @@ def parse_vtt(content: str) -> list[TranscriptSegment]:
         r"(\d{1,2}:\d{2}:\d{2}[.,]\d{3})\s*-->\s*(\d{1,2}:\d{2}:\d{2}[.,]\d{3})"
     )
     speaker_re = re.compile(r"^(.+?):\s+(.+)$")
+    # Teams <v SpeakerName> tag — matches opening tag, captures speaker name.
+    # The closing </v> tag is optional per the WebVTT spec.
+    teams_voice_re = re.compile(r"^<v ([^>]+)>(.*?)(?:</v>)?$", re.DOTALL)
 
     lines = content.strip().splitlines()
     i = 0
@@ -55,11 +65,18 @@ def parse_vtt(content: str) -> list[TranscriptSegment]:
             full_text = " ".join(text_lines)
             speaker: str | None = None
 
-            # Check for speaker label
-            speaker_match = speaker_re.match(full_text)
-            if speaker_match:
-                speaker = speaker_match.group(1)
-                full_text = speaker_match.group(2)
+            # Check for Microsoft Teams inline voice tag first (<v SpeakerName>).
+            # Teams format takes precedence over colon-style labels.
+            teams_match = teams_voice_re.match(full_text)
+            if teams_match:
+                speaker = teams_match.group(1).strip()
+                full_text = teams_match.group(2).strip()
+            else:
+                # Fall back to standard colon-style speaker label
+                speaker_match = speaker_re.match(full_text)
+                if speaker_match:
+                    speaker = speaker_match.group(1)
+                    full_text = speaker_match.group(2)
 
             if full_text:
                 segments.append(

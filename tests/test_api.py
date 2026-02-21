@@ -1,5 +1,7 @@
 """Tests for API endpoints (no external API keys required)."""
 
+import io
+import zipfile
 from unittest.mock import MagicMock, patch
 
 from fastapi import HTTPException as FastAPIHTTPException
@@ -140,6 +142,85 @@ def test_delete_nonexistent_meeting_returns_404(client: TestClient) -> None:
         response = client.delete("/api/meetings/nonexistent-id")
 
     assert response.status_code == 404
+
+
+# --- Issue #34: zip bulk upload ---
+
+def test_zip_upload_ingests_multiple_meetings():
+    """Uploading a zip with 2 .vtt files creates 2 meetings.
+
+    Mocks ingest_transcript and get_supabase_client so no external API calls are made.
+    """
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("meeting_a.vtt", "WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nSpeaker A: Hello.\n")
+        z.writestr("meeting_b.vtt", "WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nSpeaker B: World.\n")
+    buf.seek(0)
+
+    # Patch ingest_transcript to return predictable UUIDs and skip DB/embed calls.
+    # Patch get_supabase_client to prevent Supabase calls for chunk counts.
+    fake_ids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]
+    call_count = {"n": 0}
+
+    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+        idx = call_count["n"]
+        call_count["n"] += 1
+        return fake_ids[idx]
+
+    mock_client = MagicMock()
+    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 3
+
+    with (
+        patch("src.api.routes.ingest.ingest_transcript", side_effect=fake_ingest),
+        patch("src.api.routes.ingest.get_supabase_client", return_value=mock_client),
+    ):
+        response = client.post(
+            "/api/ingest",
+            files={"file": ("batch.zip", buf, "application/zip")},
+            data={"title": "Batch"},
+        )
+
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+    data = response.json()
+    assert data["meetings_ingested"] == 2
+    assert len(data["meeting_ids"]) == 2
+    assert data["errors"] == []
+
+
+def test_zip_upload_skips_non_transcript_files():
+    """Zip files that contain non-transcript files (e.g. .pdf, .png) are skipped."""
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        z.writestr("meeting_a.vtt", "WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nHello.\n")
+        z.writestr("readme.pdf", b"not a transcript")  # type: ignore[arg-type]
+        z.writestr("image.png", b"\x89PNG\r\n\x1a\n")  # type: ignore[arg-type]
+    buf.seek(0)
+
+    fake_ids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
+    call_count = {"n": 0}
+
+    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+        idx = call_count["n"]
+        call_count["n"] += 1
+        return fake_ids[idx]
+
+    mock_client = MagicMock()
+    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 2
+
+    with (
+        patch("src.api.routes.ingest.ingest_transcript", side_effect=fake_ingest),
+        patch("src.api.routes.ingest.get_supabase_client", return_value=mock_client),
+    ):
+        response = client.post(
+            "/api/ingest",
+            files={"file": ("batch.zip", buf, "application/zip")},
+            data={"title": "Mixed"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["meetings_ingested"] == 1  # only .vtt counted
+    assert len(data["meeting_ids"]) == 1
 
 
 # --- Issue #25: GET /extract must not exist (only POST) ---

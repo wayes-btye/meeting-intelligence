@@ -192,3 +192,16 @@
 - Priority order: wt10 (#52 auth) → wt11 (#41+#44) → wt12 (#42+#43) alongside wt8/wt9
 **Decisions:**
 - Auth is client-side only (Supabase Auth + Next.js middleware) — FastAPI unchanged
+
+### [2026-02-21T12:00:00Z] — Task: Supabase email/password auth (Issue #52)
+**Focus:** Add login page + middleware route protection to Next.js frontend
+**Done:**
+- Created `frontend/lib/supabase.ts` (browser client via `@supabase/ssr`)
+- Created `frontend/app/login/page.tsx` (email/password form with error feedback)
+- Created `frontend/middleware.ts` (route protection — unauthenticated → /login)
+**Next:**
+- User must add `NEXT_PUBLIC_SUPABASE_ANON_KEY` to `.env.local` and Vercel env vars
+- Create test user in Supabase dashboard → Authentication → Users
+**Decisions:**
+- Logout button added to Nav component (minimal change — reused existing `Button` component)
+- Session handled entirely client-side via `@supabase/ssr` — no backend changes needed

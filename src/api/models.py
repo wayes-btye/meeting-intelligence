@@ -27,6 +27,7 @@ class SourceChunk(BaseModel):
     similarity: float | None = None
     meeting_id: str | None = None
     combined_score: float | None = None
+    meeting_title: str | None = None
 
 
 class QueryResponse(BaseModel):

@@ -188,6 +188,11 @@ export default function ChatPage() {
                         </Badge>
                       )}
                     </div>
+                    {source.meeting_title && (
+                      <span className="text-xs text-muted-foreground">
+                        from: {source.meeting_title}
+                      </span>
+                    )}
                     <Separator />
                     <p className="text-muted-foreground leading-relaxed">
                       {source.content}

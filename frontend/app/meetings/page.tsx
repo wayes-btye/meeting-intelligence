@@ -14,6 +14,18 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
+import { Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 const PAGE_SIZE = 10;
 
@@ -47,6 +59,15 @@ export default function MeetingsPage() {
       .catch(console.error)
       .finally(() => { if (id === selected) setDetailLoading(false); });
   }, [selected]);
+
+  const handleDelete = async (id: string) => {
+    await api.deleteMeeting(id);
+    setMeetings((prev) => prev.filter((m) => m.id !== id));
+    if (selected === id) {
+      setSelected(null);
+      setDetail(null);
+    }
+  };
 
   const totalPages = Math.ceil(meetings.length / PAGE_SIZE);
   const pageMeetings = meetings.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
@@ -93,6 +114,7 @@ export default function MeetingsPage() {
                   <th className="text-left px-4 py-3 font-medium">Date</th>
                   <th className="text-right px-4 py-3 font-medium">Chunks</th>
                   <th className="text-right px-4 py-3 font-medium">Speakers</th>
+                  <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
               <tbody>
@@ -119,6 +141,29 @@ export default function MeetingsPage() {
                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}
+                    </td>
+                    <td className="px-4 py-3 text-right" onClick={(e) => e.stopPropagation()}>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete meeting?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete &ldquo;{m.title}&rdquo; along with all its chunks and extracted items. This action cannot be undone.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => void handleDelete(m.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
                     </td>
                   </tr>
                 ))}

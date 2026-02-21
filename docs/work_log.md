@@ -156,3 +156,15 @@
 - Worktree cleanup: delete C:\meeting-intelligence-wt{1,3,5}-issue-* folders in Explorer
 **Decisions:**
 - Wave 2 uses separate worktrees per issue (not one combined) — independent scope, parallelisable
+
+### [2026-02-21T00:00:00Z] — Task: Fix mypy type errors (Issue #30)
+**Focus:** Resolve all 218 mypy errors across src/ so `make lint` passes fully
+**Done:**
+- Fixed all 5 error categories: TextBlock narrowing, Supabase JSON casts, CountMethod import, bare dict params, misc annotations
+- Updated test helper `_mock_claude_response` to return real `TextBlock` (not MagicMock)
+- Result: `mypy src/` 0 errors, `ruff` clean, 115 tests pass — opened PR #40
+**Next:**
+- Merge PR #40 after review; then tackle #31 (Cloud Run), #34 (test coverage), #35 (Gemini)
+**Decisions:**
+- Used `cast(list[dict[str, Any]], result.data)` for Supabase returns — proper fix, not band-aid
+- Used `postgrest.CountMethod.exact` enum value for count= arg — proper fix

@@ -5,6 +5,7 @@ from src.api.routes.extraction import router as extraction_router
 from src.api.routes.ingest import router as ingest_router
 from src.api.routes.meetings import router as meetings_router
 from src.api.routes.query import router as query_router
+from src.api.routes.visual_summary import router as visual_summary_router
 
 app = FastAPI(
     title="Meeting Intelligence API",
@@ -28,6 +29,7 @@ app.include_router(ingest_router)
 app.include_router(query_router)
 app.include_router(meetings_router)
 app.include_router(extraction_router)
+app.include_router(visual_summary_router)
 
 
 @app.get("/health")

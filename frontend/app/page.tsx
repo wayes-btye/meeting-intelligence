@@ -9,7 +9,7 @@
 // 5. Expect: progress bar during upload, then extraction results (action items, decisions, topics)
 
 import { useCallback, useRef, useState } from "react";
-import { api, type ExtractResponse, type IngestResponse } from "@/lib/api";
+import { api, type ExtractResponse, type IngestResponse, type VisualSummaryData } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -33,6 +33,7 @@ export default function UploadPage() {
   const [phase, setPhase] = useState<Phase>("idle");
   const [progress, setProgress] = useState(0);
   const [result, setResult] = useState<Result | null>(null);
+  const [visualSummary, setVisualSummary] = useState<VisualSummaryData | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -55,6 +56,7 @@ export default function UploadPage() {
 
     setError(null);
     setResult(null);
+    setVisualSummary(null);
     setPhase("uploading");
     setProgress(20);
 
@@ -69,6 +71,10 @@ export default function UploadPage() {
       setProgress(100);
       setPhase("done");
       setResult({ ingest, extraction });
+
+      // Step 3: Visual summary (Gemini) — graceful skip if key not configured
+      const visual = await api.visualSummary(ingest.meeting_id);
+      if (visual) setVisualSummary(visual);
     } catch (err) {
       setPhase("error");
       setError(err instanceof Error ? err.message : "Upload failed");
@@ -297,6 +303,59 @@ export default function UploadPage() {
               </CardContent>
             </Card>
           )}
+        </div>
+      )}
+
+      {/* Visual Summary (Gemini) */}
+      {visualSummary && (
+        <div className="space-y-4" data-testid="visual-summary">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base">Visual Summary</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {/* Speaker breakdown */}
+              {visualSummary.speaker_breakdown.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Speaker Breakdown</p>
+                  <ul className="space-y-1">
+                    {visualSummary.speaker_breakdown.map((s, i) => (
+                      <li key={i} className="text-sm flex items-center gap-2">
+                        <Badge variant="outline">{s.speaker}</Badge>
+                        <span className="text-muted-foreground">
+                          {s.utterance_count} utterances · {s.percentage.toFixed(1)}%
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Key moments */}
+              {visualSummary.key_moments.length > 0 && (
+                <div>
+                  <p className="text-sm font-medium mb-2">Key Moments</p>
+                  <ul className="space-y-1.5">
+                    {visualSummary.key_moments.map((m, i) => (
+                      <li key={i} className="text-sm border-l-2 border-amber-500 pl-3">
+                        <span className="text-muted-foreground text-xs mr-2">
+                          {m.timestamp}
+                        </span>
+                        {m.description}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Stats */}
+              <p className="text-xs text-muted-foreground">
+                {visualSummary.word_count.toLocaleString()} words
+                {visualSummary.duration_seconds != null &&
+                  ` · ~${Math.round(visualSummary.duration_seconds / 60)} min`}
+              </p>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>

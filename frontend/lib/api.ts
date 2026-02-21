@@ -53,6 +53,15 @@ export interface ExtractResponse {
   topics: ExtractedItem[];
 }
 
+export interface VisualSummaryData {
+  meeting_id: string;
+  speaker_breakdown: { speaker: string; utterance_count: number; percentage: number }[];
+  topic_timeline: { timestamp: string; topic: string }[];
+  key_moments: { timestamp: string; description: string }[];
+  word_count: number;
+  duration_seconds: number | null;
+}
+
 export interface MeetingDetail {
   id: string;
   title: string;
@@ -97,6 +106,14 @@ export const api = {
   deleteMeeting: async (meetingId: string): Promise<void> => {
     const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, { method: 'DELETE' })
     if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
+  },
+
+  visualSummary: async (meetingId: string): Promise<VisualSummaryData | null> => {
+    const res = await fetch(`${API_URL}/api/meetings/${meetingId}/visual-summary`, {
+      method: "POST",
+    });
+    if (!res.ok) return null; // graceful degradation if 501 (no key) or 404
+    return res.json();
   },
 
   // strategy: "semantic" | "hybrid" (single retrieval strategy field)

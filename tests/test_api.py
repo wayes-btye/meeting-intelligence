@@ -142,6 +142,24 @@ def test_delete_nonexistent_meeting_returns_404(client: TestClient) -> None:
     assert response.status_code == 404
 
 
+# --- Issue #35: Visual summary returns 501 without GOOGLE_API_KEY ---
+def test_visual_summary_returns_501_without_key() -> None:
+    """If GOOGLE_API_KEY is not set, visual summary returns 501."""
+    import unittest.mock
+
+    with unittest.mock.patch.object(
+        __import__("src.config", fromlist=["settings"]).settings,
+        "google_api_key",
+        "",
+    ):
+        response = client.post(
+            "/api/meetings/12345678-1234-1234-1234-123456789abc/visual-summary"
+        )
+    assert response.status_code == 501
+    detail = response.json()["detail"].lower()
+    assert "google_api_key" in detail or "not configured" in detail
+
+
 # --- Issue #25: GET /extract must not exist (only POST) ---
 def test_extract_endpoint_no_get_method():
     """GET /api/meetings/{id}/extract must not exist — only POST should.

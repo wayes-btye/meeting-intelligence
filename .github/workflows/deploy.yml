@@ -1,9 +1,7 @@
 name: Deploy
 
 on:
-  push:
-    branches: [main]
-  workflow_dispatch:
+  workflow_dispatch:  # manual only — Cloud Run continuous deployment via Cloud Build handles auto-deploy on push to main
 
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}

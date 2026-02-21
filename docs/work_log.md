@@ -168,3 +168,15 @@
 **Decisions:**
 - Used `cast(list[dict[str, Any]], result.data)` for Supabase returns — proper fix, not band-aid
 - Used `postgrest.CountMethod.exact` enum value for count= arg — proper fix
+
+### [2026-02-21T00:00:00Z] — Task: Cloud Run + Vercel deployment (Issue #31)
+**Focus:** Wire up auto-deploy for API (Cloud Run) and frontend (Vercel)
+**Done:**
+- Fixed `Dockerfile` CMD to use `${PORT:-8000}` — Cloud Run injects `$PORT` at runtime
+- Created `vercel.json` at repo root (`rootDirectory: frontend`) for Vercel monorepo detection
+- Created `.github/workflows/deploy.yml` — builds/pushes to Artifact Registry, deploys to Cloud Run on push to main
+**Next:**
+- Add GitHub secrets: `GCP_PROJECT_ID`, `GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`, all API keys
+- Set `NEXT_PUBLIC_API_URL` env var in Vercel dashboard to Cloud Run URL once deployed
+**Decisions:**
+- Used Workload Identity Federation (keyless) for Cloud Run auth — no SA key JSON in secrets

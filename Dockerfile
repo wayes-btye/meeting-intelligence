@@ -8,4 +8,5 @@ RUN pip install --no-cache-dir "."
 
 COPY . .
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Cloud Run injects $PORT (default 8080); fall back to 8000 for local docker run
+CMD exec uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT:-8000}

@@ -217,3 +217,14 @@
 - Kick off wt8 (#34 zip+Teams VTT) and wt9 (#35 Gemini visual summary) when ready
 **Decisions:**
 - Auth merged last so all features are present before the login gate goes live
+
+### [2026-02-21T00:00:00Z] — Task: Issue #34 — Zip upload + Teams VTT (WT8)
+**Focus:** Zip bulk upload to ingest endpoint + Microsoft Teams VTT speaker tag parsing
+**Done:**
+- Part 1: `POST /api/ingest` now accepts `.zip` files — each `.vtt`/`.txt`/`.json` ingested as separate meeting; returns `BatchIngestResponse {meetings_ingested, meeting_ids, errors}`
+- Part 2: `parse_vtt()` updated to detect/strip `<v SpeakerName>` Teams inline voice tags; standard colon-style labels unaffected; fixture `tests/fixtures/teams_sample.vtt` added
+- TDD: 6 new tests written first, confirmed red, then implemented; 121 tests passing, ruff clean, no new mypy errors; PR #58 opened
+**Next:**
+- Manual test: real zip upload + real Teams VTT file before merge
+**Decisions:**
+- `_ingest_zip()` is a sync helper called from async `ingest()` — acceptable since zip extraction is CPU-bound and fast; no async needed for the extraction loop itself

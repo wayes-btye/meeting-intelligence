@@ -205,3 +205,15 @@
 **Decisions:**
 - Logout button added to Nav component (minimal change — reused existing `Button` component)
 - Session handled entirely client-side via `@supabase/ssr` — no backend changes needed
+
+### [2026-02-21T00:00:00Z] — Task: Wave 3 PRs merged (#54, #56, #55)
+**Focus:** Merge all three Wave 3 feature PRs into main
+**Done:**
+- PRs #54 (markdown+speaker), #56 (delete+title), #55 (auth) all merged via squash
+- Resolved package.json/lock conflict on #55 caused by #54/#56 landing first; regenerated lock via npm install
+- 117 tests passing on main, all builds clean
+**Next:**
+- Manual testing of auth (requires Supabase anon key + test user in dashboard)
+- Kick off wt8 (#34 zip+Teams VTT) and wt9 (#35 Gemini visual summary) when ready
+**Decisions:**
+- Auth merged last so all features are present before the login gate goes live

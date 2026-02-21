@@ -205,7 +205,8 @@ When a Claude agent is launched to work autonomously in a worktree (rather than 
 **On start:**
 1. `cd` into the worktree directory (e.g. `C:\meeting-intelligence-wt12-issues-42-43`)
 2. Run `git branch --show-current` — verify it matches the expected branch; abort if not
-3. Read the context file from `docs/worktrees/ACTIVE_wt{N}-*.md` for the full spec
+3. Read the context file from `docs/worktrees/ACTIVE_wt{N}-*.md` for the implementation spec
+4. Run `gh issue view <issue-number>` for every issue this worktree addresses — read the full description, labels, and all comments. The context file is a summary; the issue is the source of truth and may contain additional decisions, follow-up notes, or corrections added after the context file was written.
 
 **During work:**
 - Make all code changes, run tests (`pytest tests/ -m "not expensive"`), run lint (`ruff check src/ tests/`), run type checking (`mypy src/`)

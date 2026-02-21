@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from anthropic import APIStatusError
 from fastapi import APIRouter, HTTPException
 
@@ -21,10 +23,12 @@ async def extract_meeting(meeting_id: str) -> ExtractResponse:
     client = get_supabase_client()
     result = client.table("meetings").select("*").eq("id", meeting_id).execute()
 
-    if not result.data:
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    rows = cast(list[dict[str, Any]], result.data)
+    if not rows:
         raise HTTPException(status_code=404, detail="Meeting not found")
 
-    m = result.data[0]
+    m = rows[0]
     transcript = m.get("raw_transcript")
     if not transcript:
         raise HTTPException(
@@ -35,7 +39,7 @@ async def extract_meeting(meeting_id: str) -> ExtractResponse:
     from src.extraction.extractor import extract_and_store
 
     try:
-        items = extract_and_store(meeting_id, transcript)
+        items = extract_and_store(meeting_id, str(transcript))
     except APIStatusError as exc:
         # Claude API overloaded (529) or other upstream error — return 503 so the
         # browser receives a proper JSON response with CORS headers intact.

@@ -6,6 +6,7 @@ import asyncio
 from typing import Annotated
 
 from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from postgrest import CountMethod
 
 from src.api.models import IngestResponse
 from src.config import settings
@@ -113,7 +114,10 @@ async def ingest(
     # Get chunk count
     client = get_supabase_client()
     chunks = (
-        client.table("chunks").select("id", count="exact").eq("meeting_id", meeting_id).execute()
+        client.table("chunks")
+        .select("id", count=CountMethod.exact)
+        .eq("meeting_id", meeting_id)
+        .execute()
     )
 
     return IngestResponse(

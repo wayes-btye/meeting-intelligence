@@ -10,8 +10,10 @@ Each metric returns a 0-1 score with reasoning. Metrics implemented:
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from src.config import settings
 from src.evaluation.models import MetricResult
@@ -110,7 +112,7 @@ Return ONLY the JSON object.
 """
 
 
-def _call_claude_judge(prompt: str) -> dict:
+def _call_claude_judge(prompt: str) -> dict[str, Any]:
     """Call Claude as a judge and parse the JSON response."""
     client = Anthropic(api_key=settings.anthropic_api_key)
     response = client.messages.create(
@@ -118,7 +120,11 @@ def _call_claude_judge(prompt: str) -> dict:
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
-    text = response.content[0].text.strip()
+    # Narrow union content block to TextBlock — we send plain text prompts. (#30)
+    block = response.content[0]
+    if not isinstance(block, TextBlock):
+        raise ValueError(f"Expected TextBlock from Claude judge, got {type(block).__name__}")
+    text = block.text.strip()
 
     # Strip markdown fences if present
     if text.startswith("```"):
@@ -126,7 +132,8 @@ def _call_claude_judge(prompt: str) -> dict:
         lines = [ln for ln in lines if not ln.strip().startswith("```")]
         text = "\n".join(lines)
 
-    return json.loads(text)
+    result: dict[str, Any] = json.loads(text)
+    return result
 
 
 def _clamp_score(score: float) -> float:

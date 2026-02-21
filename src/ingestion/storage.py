@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any, cast
 
 from src.config import settings
 from supabase import Client, create_client
@@ -40,7 +40,9 @@ def store_meeting(
         )
         .execute()
     )
-    return str(result.data[0]["id"])
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    data = cast(list[dict[str, Any]], result.data)
+    return str(data[0]["id"])
 
 
 def store_chunks(
@@ -49,7 +51,7 @@ def store_chunks(
     chunks_with_embeddings: list[tuple[Chunk, list[float]]],
 ) -> None:
     """Store chunks with embeddings in Supabase (batched by 50)."""
-    rows: list[dict[str, object]] = []
+    rows: list[dict[str, Any]] = []
     for chunk, embedding in chunks_with_embeddings:
         rows.append(
             {

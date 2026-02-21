@@ -15,6 +15,7 @@ import tempfile
 from unittest.mock import MagicMock, patch
 
 import pytest
+from anthropic.types import TextBlock
 
 from src.evaluation.compare_strategies import format_comparison_table
 from src.evaluation.cross_check import summarize_cross_check
@@ -61,10 +62,9 @@ def _make_question(**overrides) -> TestQuestion:
 
 def _mock_claude_response(text: str) -> MagicMock:
     """Build a mock Anthropic messages.create response."""
-    mock_content = MagicMock()
-    mock_content.text = text
+    # Use a real TextBlock so isinstance checks in production code pass. (#30)
     mock_response = MagicMock()
-    mock_response.content = [mock_content]
+    mock_response.content = [TextBlock(type="text", text=text)]
     mock_response.model = "claude-sonnet-4-20250514"
     mock_response.usage = MagicMock(input_tokens=100, output_tokens=50)
     return mock_response

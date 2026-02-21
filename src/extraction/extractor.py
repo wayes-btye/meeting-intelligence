@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 from anthropic import Anthropic
+from anthropic.types import ToolChoiceToolParam, ToolParam
 
 from src.config import settings
 from src.extraction.models import ExtractedItem
@@ -125,12 +126,14 @@ def extract_from_transcript(transcript: str) -> list[ExtractedItem]:
     """
     client = Anthropic(api_key=settings.anthropic_api_key)
 
+    # Cast tool definition and choice to strict Anthropic types to satisfy mypy
+    # overload resolution — the dicts are structurally compatible. (#30)
     response = client.messages.create(
         model=settings.llm_model,
         max_tokens=4096,
         system=SYSTEM_PROMPT,
-        tools=[EXTRACTION_TOOL],
-        tool_choice={"type": "tool", "name": "store_extracted_items"},
+        tools=[cast(ToolParam, EXTRACTION_TOOL)],
+        tool_choice=cast(ToolChoiceToolParam, {"type": "tool", "name": "store_extracted_items"}),
         messages=[
             {
                 "role": "user",

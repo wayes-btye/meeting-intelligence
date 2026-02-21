@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from openai import OpenAI
 
 from src.config import settings
@@ -21,7 +23,7 @@ def semantic_search(
     match_count: int = 10,
     meeting_id: str | None = None,
     strategy: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Pure vector similarity search using match_chunks function."""
     embedding = get_query_embedding(query)
     client = get_supabase_client()
@@ -34,7 +36,8 @@ def semantic_search(
             "filter_strategy": strategy,
         },
     ).execute()
-    return result.data
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    return cast(list[dict[str, Any]], result.data)
 
 
 def hybrid_search(
@@ -43,7 +46,7 @@ def hybrid_search(
     vector_weight: float = 0.7,
     text_weight: float = 0.3,
     meeting_id: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Combined vector + full-text search.
 
     Args:
@@ -71,7 +74,8 @@ def hybrid_search(
         },
     ).execute()
 
-    data: list[dict] = result.data
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    data: list[dict[str, Any]] = cast(list[dict[str, Any]], result.data)
 
     # Python-side meeting_id filter (the SQL function may not support it)
     if meeting_id:
@@ -85,7 +89,7 @@ def search(
     retrieval_strategy: str | RetrievalStrategy = RetrievalStrategy.HYBRID,
     match_count: int = 10,
     meeting_id: str | None = None,
-) -> list[dict]:
+) -> list[dict[str, Any]]:
     """Dispatch to the appropriate search strategy.
 
     Args:

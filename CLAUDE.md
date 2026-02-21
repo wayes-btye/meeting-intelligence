@@ -107,10 +107,23 @@ pip install -r requirements.txt
 | Branch | `feat/issue-number-description` | `feat/1-foundation` |
 
 ### API Port Allocation (if running services in worktrees)
-- Main workspace: API :8000, Streamlit :8501
-- Worktree 1: API :8010, Streamlit :8511
-- Worktree 2: API :8020, Streamlit :8521
-- Worktree 3: API :8030, Streamlit :8531
+
+Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefile respects these env vars (defaults to 8000/8501).
+
+| Worktree | API port | Streamlit port |
+|----------|----------|----------------|
+| Main workspace | :8000 | :8501 |
+| WT1 (issue-22/25) | :8010 | :8511 |
+| WT2 | :8020 | :8521 |
+| WT3 (issue-23/33) | :8030 | :8531 |
+| WT4 | :8040 | :8541 |
+| WT5 (issue-32) | :8050 | :8551 |
+| WT6 (issue-30) | :8060 | :8561 |
+| WT7 (issue-31) | :8070 | :8571 |
+| WT8 (issue-34) | :8080 | :8581 |
+| WT9 (issue-35) | :8090 | :8591 |
+
+Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 
 ### Shared Database Caution
 All worktrees share the same Supabase project. Schema migrations in one worktree affect all others. Coordinate schema changes — only one worktree should run migrations at a time.

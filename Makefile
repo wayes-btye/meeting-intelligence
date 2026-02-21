@@ -4,10 +4,10 @@ install:
 	pip install -e ".[dev]"
 
 api:
-	uvicorn src.api.main:app --reload --port 8000
+	uvicorn src.api.main:app --reload --port $${PORT:-8000}
 
 streamlit:
-	streamlit run src/ui/app.py --server.port 8501
+	streamlit run src/ui/app.py --server.port $${STREAMLIT_PORT:-8501}
 
 test:
 	pytest tests/ -v -m "not expensive"

@@ -3,7 +3,9 @@
 ## Stack
 - **Language:** Python 3.11+
 - **Backend:** FastAPI (API server)
-- **Frontend:** Streamlit (thin client, calls FastAPI over HTTP)
+- **Primary UI:** React/Next.js 14 (`frontend/`) — production frontend, deployed to Vercel
+- **Dev UI:** Streamlit (`src/ui/`) — lightweight secondary UI, maintained for dev/experimentation
+- **API Explorer:** FastAPI Swagger at `/docs`, ReDoc at `/redoc` — always available when API is running
 - **Database:** Supabase (Postgres + pgvector for vectors, metadata, structured data)
 - **LLM:** Claude API (direct SDK calls — no LangChain/LlamaIndex)
 - **Embeddings:** OpenAI text-embedding-3-small (1536 dimensions)
@@ -14,11 +16,28 @@
 
 ## Architecture
 Three separate services via Docker Compose:
-- `api` — FastAPI backend (src/api/)
-- `ui` — Streamlit frontend (src/ui/)
+- `api` — FastAPI backend (`src/api/`)
+- `ui` — Streamlit dev UI (`src/ui/`)
 - `db` — Supabase (external, configured via env vars)
 
+React frontend (`frontend/`) is a standalone Next.js app — run separately with `npm run dev`.
+
 Pipeline: Ingest -> Chunk -> Embed -> Store -> Retrieve -> Generate
+
+## UI Environments
+
+Three UIs are maintained. React is the canonical production UI; the others are dev/exploration tools.
+
+| UI | Path | Start command | Default URL | Purpose |
+|----|------|---------------|-------------|---------|
+| **React/Next.js** (primary) | `frontend/` | `cd frontend && npm run dev` | `http://localhost:3000` | Production UI — upload, chat, meetings list. Deployed to Vercel. |
+| **Streamlit** (dev) | `src/ui/app.py` | `make streamlit` | `http://localhost:8501` | Lightweight dev UI — maintained for rapid prototyping and experimentation. No npm required. |
+| **API Explorer** (dev) | `src/api/` | `make api` (always on) | `http://localhost:8000/docs` | FastAPI auto-generated Swagger UI. Use `/redoc` for ReDoc view. Useful for testing endpoints directly. |
+
+**Maintenance policy:**
+- React: all new user-facing features go here
+- Streamlit: keep working, update when backend API changes; good for trying new ideas before building React components
+- API docs: no maintenance needed — auto-generated from route definitions
 
 ## Project Structure
 ```
@@ -177,8 +196,8 @@ git branch -d feat/1-foundation
 - **Best practice**: Verify current API docs before implementing integrations
 
 ### Playwright MCP
-- **Use for**: UI testing and validation after Streamlit changes
-- **Best practice**: Take screenshots before/after UI changes
+- **Use for**: UI testing and validation after React or Streamlit changes
+- **Best practice**: Take screenshots before/after UI changes; use chrome-devtools MCP for React (Next.js), Playwright for broader browser automation
 
 ## PRD Maintenance
 - All new features must be added to `docs/PRD.md` with ID, priority, and status before implementation.

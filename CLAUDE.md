@@ -145,14 +145,13 @@ Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefi
 Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 
 ### Shared Database Caution
-All worktrees share the same Supabase project. Schema migrations in one worktree affect all others immediately and irreversibly.
+All worktrees share the same Supabase project. Schema migrations applied in any worktree take effect immediately and permanently for the entire project.
 
-**CRITICAL — migration rules (read before touching the DB schema):**
-- **Only one worktree may run a migration at any time.** Running migrations in two worktrees simultaneously will corrupt the schema state.
-- **Never run a migration in a worktree whose PR has not been reviewed.** If the PR is abandoned, the schema change is already live and cannot be rolled back cleanly.
-- **Check what other worktrees are doing before migrating.** If another open branch touches the `meetings`, `chunks`, or `extracted_items` tables, coordinate with that branch first or wait for it to merge.
-- **Migration commands only:** `supabase migration new <name>` then `supabase db push --linked`. Never use the Supabase MCP `apply_migration` tool in production (it bypasses the migration tracking table).
-- **Issues that require migrations** (as of Wave 2): #45 (add `project_id` to meetings), #48 (add `chunking_strategy` to meetings). These must not run in parallel with each other or with any other migration.
+**CRITICAL — migrations are the main workspace's responsibility:**
+- **Never apply a migration from a worktree without explicit user instruction.** If your branch requires a schema change, write the migration file and stop — do not run `supabase db push`. Ask the user: "This branch requires a migration. Should I apply it now, or will the main workspace handle it?"
+- **The main workspace applies all migrations**, after checking that no other open worktree has a conflicting schema change pending. Before applying, check open PRs and active worktrees for any branches that also touch the schema.
+- **Migrations are one-at-a-time and sequential.** Two worktrees must never push schema changes concurrently. If unsure whether another branch is mid-migration, ask before proceeding.
+- **Migration commands:** `supabase migration new <name>` to create, `supabase db push --linked` to apply. Never use the Supabase MCP `apply_migration` tool in production — it bypasses the migration tracking table.
 
 ### Remove When Done (after PR merged)
 ```bash

@@ -16,21 +16,47 @@
 - Health check endpoint: `GET /health` → `{"status": "healthy"}` — this is what Cloud Run uses for readiness checks.
 - Frontend (`/frontend/`) is a Next.js app. It reads `NEXT_PUBLIC_API_URL` from `.env.local` — for Vercel this becomes a Vercel environment variable.
 - CORS is already configured in `src/api/main.py` — it allows `localhost:3000` and any `*.vercel.app` origin.
-- Do not run `make lint` — the mypy errors (Issue #30) are being fixed in a separate worktree (wt6). Run `ruff check src/ tests/` only.
+- Run `ruff check src/ tests/` only (do not run mypy).
 
 **Port for this worktree:** `PORT=8070 make api`
 
 ---
 
-## Your mission
+## How deployment actually works (updated after research)
 
-Deploy the system to cloud so the assessor can run it without local setup.
+### Cloud Run — UI-based Continuous Deployment (no GitHub Actions needed)
 
-**Scope:**
-1. `Dockerfile` for the FastAPI API
-2. GitHub Actions `deploy.yml` workflow (build + push to GCR + deploy to Cloud Run)
-3. `vercel.json` for the frontend
-4. README updated with live demo URLs
+Cloud Run's "Continuous Deployment" feature creates a **Cloud Build trigger** on GCP's side when you connect a GitHub repo via the Console UI. **No `.github/workflows/deploy.yml` file is needed.** Nothing is written to the GitHub repo — the pipeline lives entirely in GCP.
+
+How it works:
+1. In the Cloud Run Console, create a new service → "Continuously deploy from a source repository"
+2. Authenticate GitHub via the Cloud Build GitHub App (OAuth flow)
+3. Select repo + branch (`main`)
+4. Choose "Dockerfile" build type, point to `Dockerfile` at repo root
+5. Set env vars (API keys) in the service configuration
+6. Cloud Run creates the Cloud Build trigger and deploys on every push to main
+
+**Your job in this worktree: create the `Dockerfile` only.** The user connects the repo via the Cloud Run Console.
+
+### Vercel — zero config needed
+
+Vercel auto-detects Next.js. When importing the GitHub repo:
+1. Set **Root Directory** to `frontend` in the dashboard
+2. Vercel auto-detects Next.js, sets `next build` as build command, `.next` as output
+3. Set `NEXT_PUBLIC_API_URL` to the Cloud Run URL as a Vercel environment variable
+
+**No `vercel.json` is needed** for a standard Next.js app. Do not create one.
+
+---
+
+## Your mission (what to build)
+
+Two files only:
+
+**1. `Dockerfile` at the repo root**
+**2. `README.md` updated with Live Demo section**
+
+The GitHub Actions workflow and `vercel.json` are NOT needed.
 
 ---
 
@@ -48,95 +74,23 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY src/ ./src/
 
+# Cloud Run injects $PORT; default to 8080 if not set
+ENV PORT=8080
 EXPOSE 8080
 
-CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["sh", "-c", "uvicorn src.api.main:app --host 0.0.0.0 --port ${PORT}"]
 ```
 
 **Notes:**
-- Cloud Run listens on port 8080 by default (or whatever `PORT` env var Cloud Run injects — use `$PORT` if you want to be flexible)
 - `python:3.11-slim` keeps the image lean
-- Copy only `src/` and `requirements.txt` — no tests, no docs, no worktree files
+- Copy only `src/` and `requirements.txt` — no tests, no docs
+- `${PORT}` respects whatever Cloud Run injects (it's always 8080 in practice)
 
 ---
 
-## Step 2 — GitHub Actions deploy workflow
+## Step 2 — Update README
 
-Create `.github/workflows/deploy.yml`:
-
-```yaml
-name: Deploy to Cloud Run
-
-on:
-  push:
-    branches: [main]
-  workflow_dispatch:
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write  # for Workload Identity Federation (preferred) or use service account key
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Authenticate to Google Cloud
-        uses: google-github-actions/auth@v2
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
-
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Build and push Docker image
-        run: |
-          gcloud builds submit \
-            --tag gcr.io/${{ secrets.GCP_PROJECT_ID }}/meeting-intelligence-api:${{ github.sha }} \
-            --project ${{ secrets.GCP_PROJECT_ID }}
-
-      - name: Deploy to Cloud Run
-        run: |
-          gcloud run deploy meeting-intelligence-api \
-            --image gcr.io/${{ secrets.GCP_PROJECT_ID }}/meeting-intelligence-api:${{ github.sha }} \
-            --platform managed \
-            --region europe-west2 \
-            --allow-unauthenticated \
-            --port 8080 \
-            --set-env-vars "ANTHROPIC_API_KEY=${{ secrets.ANTHROPIC_API_KEY }},OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }},ASSEMBLYAI_API_KEY=${{ secrets.ASSEMBLYAI_API_KEY }},SUPABASE_URL=${{ secrets.SUPABASE_URL }},SUPABASE_KEY=${{ secrets.SUPABASE_KEY }}" \
-            --project ${{ secrets.GCP_PROJECT_ID }}
-```
-
-**Required GitHub Secrets (manual — see MANUAL-TASKS issue #39):**
-- `GCP_SA_KEY` — service account JSON key with Cloud Run + Cloud Build + GCR roles
-- `GCP_PROJECT_ID` — your GCP project ID
-- `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ASSEMBLYAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`
-
----
-
-## Step 3 — Vercel config
-
-Create `frontend/vercel.json`:
-
-```json
-{
-  "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "framework": "nextjs",
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@meeting-intelligence-api-url"
-  }
-}
-```
-
-`@meeting-intelligence-api-url` references a Vercel environment variable — set it to the Cloud Run URL in the Vercel dashboard after the Cloud Run deploy succeeds.
-
----
-
-## Step 4 — Update README
-
-Update `README.md` to add a "Live Demo" section at the top:
+Update `README.md` to add a "Live Demo" section at the top (placeholder URLs — the user fills in real URLs after connecting Cloud Run):
 
 ```markdown
 ## Live Demo
@@ -147,7 +101,30 @@ Update `README.md` to add a "Live Demo" section at the top:
 Health check: `GET /health` → `{"status": "healthy"}`
 ```
 
-(Fill in the actual URLs after deploy.)
+---
+
+## What the user does manually (not your job)
+
+These are manual steps the user performs in their browser — **do not try to script these:**
+
+### Cloud Run setup
+1. Go to [Cloud Run Console](https://console.cloud.google.com/run) → Create Service
+2. Choose "Continuously deploy from a source repository"
+3. Connect GitHub repo via Cloud Build GitHub App (OAuth)
+4. Select branch: `main`, build type: `Dockerfile`, Dockerfile path: `Dockerfile`
+5. Set env vars: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ASSEMBLYAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`, `GEMINI_API_KEY`
+6. Allow unauthenticated invocations, region: `europe-west2` (or user's preference)
+
+**Required IAM** (Cloud Build service account needs these roles):
+- `roles/run.admin` (to deploy revisions)
+- `roles/iam.serviceAccountUser`
+
+### Vercel setup
+1. Go to [vercel.com/new](https://vercel.com/new) → Import GitHub repo
+2. Set **Root Directory** to `frontend`
+3. Framework auto-detected as Next.js — no other settings needed
+4. Add environment variable: `NEXT_PUBLIC_API_URL` = Cloud Run URL (from step above)
+5. Deploy
 
 ---
 
@@ -171,34 +148,32 @@ curl http://localhost:8080/health
 
 ## Definition of done
 
-- [ ] `Dockerfile` builds cleanly (`docker build .` exits 0)
-- [ ] `.github/workflows/deploy.yml` created (CI will validate YAML syntax)
-- [ ] `frontend/vercel.json` created
-- [ ] `README.md` updated with placeholder demo URLs
-- [ ] `ruff check src/ tests/` clean (do not run mypy — pre-existing errors in wt6)
+- [ ] `Dockerfile` at repo root builds cleanly (`docker build .` exits 0)
+- [ ] `README.md` updated with placeholder Live Demo URLs
+- [ ] `ruff check src/ tests/` clean
+- [ ] No `vercel.json` created (not needed)
+- [ ] No `.github/workflows/deploy.yml` created (Cloud Run UI handles this)
 
 ---
 
 ## How to raise the PR
 
 ```bash
-git add Dockerfile .github/workflows/deploy.yml frontend/vercel.json README.md
-git commit -m "feat: Cloud Run deployment — Dockerfile, GitHub Actions deploy.yml, Vercel config (#31)"
+git add Dockerfile README.md
+git commit -m "feat: Dockerfile + README live demo section for Cloud Run deploy (#31)"
 gh pr create \
-  --title "feat: cloud deployment — Cloud Run API + Vercel frontend (#31)" \
+  --title "feat: cloud deployment — Dockerfile for Cloud Run (#31)" \
   --body "Closes #31
 
 ## What this adds
-- Dockerfile for FastAPI API (python:3.11-slim, port 8080)
-- .github/workflows/deploy.yml — builds/pushes to GCR, deploys to Cloud Run on push to main
-- frontend/vercel.json — Vercel build config
-- README.md — live demo URLs (placeholder until GCP project is set up)
+- Dockerfile for FastAPI API (python:3.11-slim, \$PORT-aware)
+- README.md — Live Demo section with placeholder URLs
 
-## Manual steps required before deploy works
-See Issue #39 MANUAL-TASKS for GCP project setup, service account, and GitHub Secrets.
+## What the user connects manually
+- Cloud Run: Continuous Deployment via Cloud Run Console UI (no GitHub Actions needed — Cloud Run creates Cloud Build trigger automatically)
+- Vercel: Import repo, set Root Directory to \`frontend\`, add NEXT_PUBLIC_API_URL env var
 
 ## Test plan
 - docker build . exits 0
-- Workflow YAML validates (CI lint)
-- Health check at /health returns 200 after deploy"
+- docker run with env vars → GET /health returns {status: healthy}"
 ```

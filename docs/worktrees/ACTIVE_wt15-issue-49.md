@@ -1,5 +1,5 @@
 # Worktree WT15 — Issue #49
-**Status:** `PLANNED` — worktree not yet created
+**Status:** `ACTIVE` — Phase 1 implemented, PR #60 open
 
 ---
 

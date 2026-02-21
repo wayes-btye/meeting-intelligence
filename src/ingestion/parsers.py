@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+from collections.abc import Callable
 
 from src.ingestion.models import TranscriptSegment
 
@@ -178,7 +179,8 @@ def parse_transcript(content: str, format: str) -> list[TranscriptSegment]:
     Raises:
         ValueError: If *format* is not recognized.
     """
-    dispatch: dict[str, object] = {
+    # Typed dict avoids operator/no-any-return errors when calling parser(). (#30)
+    dispatch: dict[str, Callable[[str], list[TranscriptSegment]]] = {
         "vtt": parse_vtt,
         "text": parse_plain_text,
         "plain_text": parse_plain_text,
@@ -191,4 +193,4 @@ def parse_transcript(content: str, format: str) -> list[TranscriptSegment]:
         msg = f"Unknown transcript format: {format!r}. Supported: {list(dispatch.keys())}"
         raise ValueError(msg)
 
-    return parser(content)  # type: ignore[operator]
+    return parser(content)

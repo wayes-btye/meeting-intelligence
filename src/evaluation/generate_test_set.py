@@ -4,8 +4,10 @@ from __future__ import annotations
 
 import json
 import uuid
+from typing import Any
 
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from src.config import settings
 from src.evaluation.models import Difficulty, QuestionCategory, TestQuestion
@@ -80,10 +82,14 @@ def _call_claude(prompt: str) -> str:
         max_tokens=4096,
         messages=[{"role": "user", "content": prompt}],
     )
-    return response.content[0].text
+    # Narrow union content block to TextBlock — plain text prompt, no tools. (#30)
+    block = response.content[0]
+    if not isinstance(block, TextBlock):
+        raise ValueError(f"Expected TextBlock from Claude, got {type(block).__name__}")
+    return block.text
 
 
-def _parse_questions_json(raw: str) -> list[dict]:
+def _parse_questions_json(raw: str) -> list[dict[str, Any]]:
     """Parse Claude's response as a JSON array, handling markdown fences."""
     text = raw.strip()
     # Strip markdown code fences if present
@@ -92,7 +98,8 @@ def _parse_questions_json(raw: str) -> list[dict]:
         # Remove first and last lines (the fences)
         lines = [ln for ln in lines if not ln.strip().startswith("```")]
         text = "\n".join(lines)
-    return json.loads(text)
+    result: list[dict[str, Any]] = json.loads(text)
+    return result
 
 
 def generate_single_meeting_questions(

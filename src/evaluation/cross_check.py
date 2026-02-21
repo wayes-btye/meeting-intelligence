@@ -8,8 +8,10 @@ then uses Claude as judge to compare.
 from __future__ import annotations
 
 import json
+from typing import Any
 
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from src.config import settings
 from src.evaluation.models import (
@@ -83,14 +85,18 @@ def _generate_context_stuffing_answer(
             }
         ],
     )
-    return response.content[0].text
+    # Narrow union content block to TextBlock — plain text prompt, no tools. (#30)
+    cs_block = response.content[0]
+    if not isinstance(cs_block, TextBlock):
+        raise ValueError(f"Expected TextBlock from Claude, got {type(cs_block).__name__}")
+    return cs_block.text
 
 
 def _generate_rag_answer(
     question: str,
     retrieval_strategy: str = "hybrid",
     meeting_id: str | None = None,
-) -> tuple[str, list[dict]]:
+) -> tuple[str, list[dict[str, Any]]]:
     """Generate an answer using the RAG pipeline.
 
     Args:
@@ -118,7 +124,7 @@ def _judge_answers(
     expected_answer: str,
     rag_answer: str,
     context_stuffing_answer: str,
-) -> dict:
+) -> dict[str, Any]:
     """Use Claude to judge which answer is better."""
     prompt = JUDGE_PROMPT.format(
         question=question,
@@ -132,12 +138,17 @@ def _judge_answers(
         max_tokens=1024,
         messages=[{"role": "user", "content": prompt}],
     )
-    text = response.content[0].text.strip()
+    # Narrow union content block to TextBlock — plain text prompt, no tools. (#30)
+    judge_block = response.content[0]
+    if not isinstance(judge_block, TextBlock):
+        raise ValueError(f"Expected TextBlock from Claude judge, got {type(judge_block).__name__}")
+    text = judge_block.text.strip()
     if text.startswith("```"):
         lines = text.split("\n")
         lines = [ln for ln in lines if not ln.strip().startswith("```")]
         text = "\n".join(lines)
-    return json.loads(text)
+    result: dict[str, Any] = json.loads(text)
+    return result
 
 
 def cross_check_question(
@@ -225,7 +236,7 @@ def run_cross_check(
     return results
 
 
-def summarize_cross_check(results: list[CrossCheckResult]) -> dict:
+def summarize_cross_check(results: list[CrossCheckResult]) -> dict[str, Any]:
     """Summarize cross-check results into aggregate statistics.
 
     Returns:

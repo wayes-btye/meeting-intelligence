@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
+from typing import Any, cast
+
 from fastapi import APIRouter, HTTPException
+from postgrest import CountMethod
 
 from src.api.models import MeetingDetail, MeetingSummary, SourceChunk
 from src.ingestion.storage import get_supabase_client
@@ -16,11 +19,16 @@ async def list_meetings() -> list[MeetingSummary]:
     client = get_supabase_client()
     result = client.table("meetings").select("*").order("created_at", desc=True).execute()
 
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    rows = cast(list[dict[str, Any]], result.data)
     meetings: list[MeetingSummary] = []
-    for m in result.data:
+    for m in rows:
         # Get chunk count
         chunks = (
-            client.table("chunks").select("id", count="exact").eq("meeting_id", m["id"]).execute()
+            client.table("chunks")
+            .select("id", count=CountMethod.exact)
+            .eq("meeting_id", m["id"])
+            .execute()
         )
         meetings.append(
             MeetingSummary(
@@ -42,10 +50,12 @@ async def get_meeting(meeting_id: str) -> MeetingDetail:
     client = get_supabase_client()
     result = client.table("meetings").select("*").eq("id", meeting_id).execute()
 
-    if not result.data:
+    # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
+    detail_rows = cast(list[dict[str, Any]], result.data)
+    if not detail_rows:
         raise HTTPException(status_code=404, detail="Meeting not found")
 
-    m = result.data[0]
+    m = detail_rows[0]
 
     # Get chunks
     chunks_result = (
@@ -77,9 +87,9 @@ async def get_meeting(meeting_id: str) -> MeetingDetail:
                 start_time=c.get("start_time"),
                 end_time=c.get("end_time"),
             )
-            for c in chunks_result.data
+            for c in cast(list[dict[str, Any]], chunks_result.data)
         ],
-        extracted_items=items_result.data,
+        extracted_items=cast(list[dict[str, Any]], items_result.data),
     )
 
 

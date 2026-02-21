@@ -2,12 +2,15 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from anthropic import Anthropic
+from anthropic.types import TextBlock
 
 from src.config import settings
 
 
-def generate_answer(question: str, context_chunks: list[dict]) -> dict:
+def generate_answer(question: str, context_chunks: list[dict[str, Any]]) -> dict[str, Any]:
     """Generate an answer using Claude with source attribution.
 
     Args:
@@ -51,8 +54,14 @@ def generate_answer(question: str, context_chunks: list[dict]) -> dict:
         ],
     )
 
+    # Narrow the content block type — response.content[0] is a union of block types;
+    # we always request plain text so the first block should be TextBlock. (#30)
+    block = response.content[0]
+    if not isinstance(block, TextBlock):
+        raise ValueError(f"Expected TextBlock from Claude, got {type(block).__name__}")
+
     return {
-        "answer": response.content[0].text,
+        "answer": block.text,
         "sources": context_chunks,
         "model": response.model,
         "usage": {

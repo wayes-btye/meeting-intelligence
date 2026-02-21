@@ -145,7 +145,14 @@ Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefi
 Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 
 ### Shared Database Caution
-All worktrees share the same Supabase project. Schema migrations in one worktree affect all others. Coordinate schema changes — only one worktree should run migrations at a time.
+All worktrees share the same Supabase project. Schema migrations in one worktree affect all others immediately and irreversibly.
+
+**CRITICAL — migration rules (read before touching the DB schema):**
+- **Only one worktree may run a migration at any time.** Running migrations in two worktrees simultaneously will corrupt the schema state.
+- **Never run a migration in a worktree whose PR has not been reviewed.** If the PR is abandoned, the schema change is already live and cannot be rolled back cleanly.
+- **Check what other worktrees are doing before migrating.** If another open branch touches the `meetings`, `chunks`, or `extracted_items` tables, coordinate with that branch first or wait for it to merge.
+- **Migration commands only:** `supabase migration new <name>` then `supabase db push --linked`. Never use the Supabase MCP `apply_migration` tool in production (it bypasses the migration tracking table).
+- **Issues that require migrations** (as of Wave 2): #45 (add `project_id` to meetings), #48 (add `chunking_strategy` to meetings). These must not run in parallel with each other or with any other migration.
 
 ### Remove When Done (after PR merged)
 ```bash

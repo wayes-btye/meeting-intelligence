@@ -58,13 +58,64 @@ private-context/  # Private planning docs (gitignored — never commit)
 
 ## Commands
 ```bash
-make api              # Start FastAPI dev server
+make api              # Start FastAPI dev server (kills any stale process on the port first)
 make streamlit        # Start Streamlit UI
 make test             # Run pytest suite
 make lint             # Run ruff + mypy
 make format           # Auto-format with ruff
 docker compose up     # Start all services
 ```
+
+## Starting the Dev Environment
+
+**This is fundamental. If you cannot start the dev environment, you cannot test, verify, or debug anything. Do this first, every time.**
+
+### Step 1 — API server
+```bash
+cd /c/meeting-intelligence
+make api
+# Starts on http://localhost:8000 — verify with: curl http://localhost:8000/health
+```
+
+`make api` runs `scripts/start-api.sh` which **kills any existing process on the port before starting**. You should never need to manually hunt for stale processes. If `make` is not on PATH (Git Bash limitation), run directly:
+```bash
+bash scripts/start-api.sh
+# or with a custom port:
+PORT=8080 bash scripts/start-api.sh
+```
+
+### Step 2 — React frontend
+```bash
+cd /c/meeting-intelligence/frontend
+npm run dev
+# Starts on http://localhost:3000
+```
+
+Before running `npm run dev` for the first time after a `git pull`, always run `npm install` first — `git pull` updates `package.json` but does not install new packages automatically.
+
+### Step 3 — Verify both are up
+```bash
+curl http://localhost:8000/health          # → {"status":"healthy"}
+curl -o /dev/null -w "%{http_code}" http://localhost:3000   # → 200 or 307 (redirect to /login)
+```
+
+### Windows-specific: killing stale processes manually
+If `scripts/start-api.sh` fails to clear a port (rare), use this:
+```bash
+# Find what's on port 8000
+netstat -ano | grep ":8000" | grep LISTEN
+# Kill it by PID (replace 12345 with actual PID)
+cmd //c "taskkill /PID 12345 /F"
+```
+To kill ALL node processes (clears stale Next.js dev servers):
+```bash
+cmd //c "taskkill /F /IM node.exe"
+```
+
+### Environment files
+- `/.env` — Python API keys (copy from `.env.example`, never commit)
+- `/frontend/.env.local` — Next.js env vars (copy from `frontend/.env.example`, never commit)
+- Both files must exist before starting. If the API crashes immediately on startup, a missing `.env` is the most likely cause.
 
 ## Testing
 - Framework: **pytest**

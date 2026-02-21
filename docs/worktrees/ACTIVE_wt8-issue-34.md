@@ -17,9 +17,9 @@
 - Chunkers: `src/ingestion/chunker.py` — `NaiveChunker`, `SpeakerTurnChunker`.
 - Storage: `src/ingestion/storage.py` — `store_meeting()`, `store_chunks()`.
 - Tests: `tests/test_ingestion.py` (parsers), `tests/test_api.py` (API routes).
-- All 113 tests pass on main. Do not break them.
+- All 115 tests pass on main. Do not break them.
 - **Port for this worktree:** `PORT=8080 make api`
-- Do not run `mypy` — pre-existing 218 errors being fixed in wt6. Run `ruff check src/ tests/` only.
+- mypy is now passing (PR #40 merged) — run `ruff check src/ tests/` AND `mypy src/` before PR.
 
 ---
 

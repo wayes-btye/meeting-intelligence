@@ -4,7 +4,7 @@ install:
 	pip install -e ".[dev]"
 
 api:
-	uvicorn src.api.main:app --reload --port $${PORT:-8000}
+	@bash scripts/start-api.sh
 
 streamlit:
 	streamlit run src/ui/app.py --server.port $${STREAMLIT_PORT:-8501}

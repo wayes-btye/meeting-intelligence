@@ -4,7 +4,7 @@
 
 Deploy the system to cloud so the assessor can run it without local setup.
 
-- **API** → Google Cloud Run (Docker container, auto-deploy via GitHub Actions)
+- **API** → Google Cloud Run (Docker container, auto-deploy via Cloud Build connected to GitHub)
 - **Frontend** → Vercel (Next.js in `frontend/`, zero-config via `vercel.json`)
 
 ## What Was Done
@@ -25,12 +25,8 @@ The Next.js app lives in `frontend/` not the repo root. Without this, Vercel wou
 { "rootDirectory": "frontend", "framework": "nextjs" }
 ```
 
-### 3. `.github/workflows/deploy.yml` — Cloud Run auto-deploy
-Triggers on `push` to `main` (or `workflow_dispatch`). Steps:
-1. Authenticate via Workload Identity Federation (keyless — no SA key JSON)
-2. Build Docker image, tag with `$GITHUB_SHA` + `latest`
-3. Push to Artifact Registry (`us-central1-docker.pkg.dev/<PROJECT>/meeting-intelligence/api`)
-4. Deploy to Cloud Run service `meeting-intelligence-api` in `us-central1`
+### 3. `.github/workflows/deploy.yml` — manual fallback only
+Trigger changed to `workflow_dispatch` only — Cloud Run's built-in continuous deployment via Cloud Build handles auto-deploy on push to `main`. The workflow remains as a manual escape hatch if needed.
 
 ### 4. CORS — already correct
 `src/api/main.py` already had `allow_origin_regex: r"https://.*\.vercel\.app"` — covers all Vercel preview and production URLs.

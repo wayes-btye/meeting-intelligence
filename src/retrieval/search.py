@@ -11,6 +11,19 @@ from src.ingestion.storage import get_supabase_client
 from src.pipeline_config import RetrievalStrategy
 
 
+def _enrich_with_meeting_titles(chunks: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Add meeting_title to each chunk by fetching meeting metadata."""
+    if not chunks:
+        return chunks
+    meeting_ids = list({c["meeting_id"] for c in chunks if c.get("meeting_id")})
+    client = get_supabase_client()
+    result = client.table("meetings").select("id,title").in_("id", meeting_ids).execute()
+    title_map = {r["id"]: r["title"] for r in cast(list[dict[str, Any]], result.data)}
+    for chunk in chunks:
+        chunk["meeting_title"] = title_map.get(chunk.get("meeting_id", ""))
+    return chunks
+
+
 def get_query_embedding(query: str, model: str = "text-embedding-3-small") -> list[float]:
     """Generate an embedding vector for the given query string."""
     client = OpenAI(api_key=settings.openai_api_key)
@@ -37,7 +50,8 @@ def semantic_search(
         },
     ).execute()
     # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
-    return cast(list[dict[str, Any]], result.data)
+    chunks = cast(list[dict[str, Any]], result.data)
+    return _enrich_with_meeting_titles(chunks)
 
 
 def hybrid_search(
@@ -81,7 +95,7 @@ def hybrid_search(
     if meeting_id:
         data = [r for r in data if r.get("meeting_id") == meeting_id]
 
-    return data[:match_count]
+    return _enrich_with_meeting_titles(data[:match_count])
 
 
 def search(

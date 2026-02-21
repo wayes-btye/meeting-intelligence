@@ -1,4 +1,5 @@
 # Worktree WT8 — Issue #34
+**Status:** `ACTIVE` — worktree at `C:\meeting-intelligence-wt8-issue-34`
 **Branch:** `feat/34-zip-teams-vtt`
 **Created from:** main @ 75209d7
 **Worktree path:** `C:\meeting-intelligence-wt8-issue-34`

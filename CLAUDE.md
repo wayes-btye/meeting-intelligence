@@ -125,6 +125,23 @@ pip install -r requirements.txt
 | Folder | `meeting-intelligence-wt{N}-issue-{XXX}` | `meeting-intelligence-wt1-issue-1` |
 | Branch | `feat/issue-number-description` | `feat/1-foundation` |
 
+### Worktree Context Files (`docs/worktrees/`)
+
+Every worktree has a context file in `docs/worktrees/`. The filename prefix shows its current state — visible at a glance in any file explorer:
+
+| Prefix | Meaning |
+|--------|---------|
+| `PLANNED_` | Issue raised, worktree not yet created |
+| `ACTIVE_` | Worktree created and work in progress |
+| `MERGED_` | PR merged, worktree removed |
+
+**Lifecycle:**
+1. When an issue is queued for a worktree, create `PLANNED_wt{N}-issue-{XXX}.md` with the brief context.
+2. When the worktree is created, rename to `ACTIVE_` and update the `**Status:**` line in the file.
+3. When the PR is merged and the worktree is removed, rename to `MERGED_` and record the PR number and date on the status line.
+
+The second line of every context file is a `**Status:**` badge — the single most useful line when you open the file.
+
 ### API Port Allocation (if running services in worktrees)
 
 Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefile respects these env vars (defaults to 8000/8501).

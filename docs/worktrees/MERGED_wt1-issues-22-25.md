@@ -1,4 +1,5 @@
 # Worktree WT1 — Issues #22 and #25
+**Status:** `MERGED` — PR #36 merged 2026-02-20, worktree removed
 **Branch:** `fix/22-25-audio-endpoint`
 **Created from:** main @ 771203b
 

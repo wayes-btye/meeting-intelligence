@@ -1,4 +1,5 @@
 # Worktree WT6 — Issue #30
+**Status:** `MERGED` — PR #40 merged 2026-02-21, worktree removed
 **Branch:** `fix/30-mypy-errors`
 **Created from:** main @ 75209d7
 **Worktree path:** `C:\meeting-intelligence-wt6-issue-30`

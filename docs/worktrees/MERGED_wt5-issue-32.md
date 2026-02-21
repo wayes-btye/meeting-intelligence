@@ -1,4 +1,5 @@
 # Worktree WT5 — Issue #32
+**Status:** `MERGED` — PR #38 merged 2026-02-20, worktree removed
 **Branch:** `feat/32-react-frontend`
 **Created from:** main @ 771203b
 

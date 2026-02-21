@@ -1,4 +1,5 @@
 # Worktree WT7 — Issue #31
+**Status:** `ACTIVE` — worktree at `C:\meeting-intelligence-wt7-issue-31`
 **Branch:** `feat/31-cloud-run`
 **Created from:** main @ 75209d7
 **Worktree path:** `C:\meeting-intelligence-wt7-issue-31`

@@ -1,4 +1,5 @@
 # Worktree WT9 — Issue #35
+**Status:** `ACTIVE` — worktree at `C:\meeting-intelligence-wt9-issue-35`
 **Branch:** `feat/35-gemini-visual-summary`
 **Created from:** main @ 75209d7
 **Worktree path:** `C:\meeting-intelligence-wt9-issue-35`

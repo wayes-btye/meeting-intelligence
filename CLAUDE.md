@@ -103,6 +103,31 @@ docker compose up     # Start all services
 
 This project uses git worktrees for parallel development with separate Claude Code sessions.
 
+### Branch Safety Rules — CRITICAL
+
+These rules apply to every agent and every session working in a worktree. Violating them can corrupt the main branch.
+
+**NEVER, under any circumstances:**
+- `git push origin main` from a worktree — ever, for any reason
+- `git commit` from the main workspace (`C:\meeting-intelligence`) for work that belongs on a feature branch
+- Force-push or rebase a branch that already has an open PR without explicit user instruction
+- Merge a branch into main from within a worktree
+
+**ALWAYS, before touching any git command in a worktree:**
+1. Run `git branch --show-current` and verify you are on the expected feature branch
+2. If the branch does not match the worktree's context file — STOP. Do not commit. Flag the mismatch to the user.
+
+**Permitted in a worktree:**
+- `git add`, `git commit`, `git push origin <feature-branch>` — normal development workflow
+- `git push -u origin <feature-branch>` — to set tracking on first push
+- `gh pr create` — creating a PR against main is fine; the merge itself is the user's decision
+- `gh issue comment` — progress updates on GitHub issues
+
+**Only the main workspace may:**
+- Push to `main` (`git push origin main`)
+- Apply database migrations (`supabase db push --linked`)
+- Merge PRs (done via GitHub UI or `gh pr merge`, user-initiated)
+
 ### Creating a Worktree
 **Only run from the main workspace (`meeting-intelligence`).**
 
@@ -113,9 +138,9 @@ git worktree add ../meeting-intelligence-wt1-issue-1 -b feat/1-foundation
 # Step 2: Copy environment
 cp .env ../meeting-intelligence-wt1-issue-1/.env
 
-# Step 3: Install dependencies (in the worktree)
+# Step 3: Install Python dependencies (uses pyproject.toml)
 cd ../meeting-intelligence-wt1-issue-1
-pip install -r requirements.txt
+pip install -e ".[dev]"
 ```
 
 ### Naming Convention
@@ -158,6 +183,9 @@ Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefi
 | WT7 (issue-31) | :8070 | :8571 |
 | WT8 (issue-34) | :8080 | :8581 |
 | WT9 (issue-35) | :8090 | :8591 |
+| WT10 (issue-52) | :8100 | frontend-only (no API changes) |
+| WT11 (issues-41/44) | frontend-only | uses main :8000 |
+| WT12 (issues-42/43) | :8120 | — |
 
 Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 
@@ -170,11 +198,40 @@ All worktrees share the same Supabase project. Schema migrations applied in any 
 - **Migrations are one-at-a-time and sequential.** Two worktrees must never push schema changes concurrently. If unsure whether another branch is mid-migration, ask before proceeding.
 - **Migration commands:** `supabase migration new <name>` to create, `supabase db push --linked` to apply. Never use the Supabase MCP `apply_migration` tool in production — it bypasses the migration tracking table.
 
-### Remove When Done (after PR merged)
+### Agent-Driven Worktrees
+
+When a Claude agent is launched to work autonomously in a worktree (rather than a human working interactively), the agent follows this protocol:
+
+**On start:**
+1. `cd` into the worktree directory (e.g. `C:\meeting-intelligence-wt12-issues-42-43`)
+2. Run `git branch --show-current` — verify it matches the expected branch; abort if not
+3. Read the context file from `docs/worktrees/ACTIVE_wt{N}-*.md` for the implementation spec
+4. Run `gh issue view <issue-number>` for every issue this worktree addresses — read the full description, labels, and all comments. The context file is a summary; the issue is the source of truth and may contain additional decisions, follow-up notes, or corrections added after the context file was written.
+
+**During work:**
+- Make all code changes, run tests (`pytest tests/ -m "not expensive"`), run lint (`ruff check src/ tests/`), run type checking (`mypy src/`)
+- Only commit when tests and lint are passing
+- Use conventional commit messages (`feat:`, `fix:`, etc.)
+
+**On completion:**
+- `git push -u origin <branch>` — push the branch (never main)
+- `gh pr create` — open a PR against main with a summary of changes
+- `gh issue comment <issue-number> --body "..."` — post a progress note on each relevant issue
+- **Leave the worktree directory intact** — do not delete it; the user may want to enter it manually to test, inspect, or continue work
+
+**The worktree stays alive.** It is not cleaned up by the agent. The user decides when to remove it (after reviewing and merging the PR).
+
+### Remove When Done (user decision, after PR merged)
+
+The user removes the worktree manually once they are satisfied with the PR and it has been merged:
+
 ```bash
+# Run from main workspace only
 git worktree remove ../meeting-intelligence-wt1-issue-1
 git branch -d feat/1-foundation
 ```
+
+Rename the context file to `MERGED_` and record the PR number and merge date.
 
 ## Work Log
 **IMPORTANT**: Always maintain `docs/work_log.md`:

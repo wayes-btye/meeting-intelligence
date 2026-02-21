@@ -16,9 +16,9 @@
 - Frontend pages: `frontend/app/`. The Upload page is `frontend/app/page.tsx`.
 - The frontend calls `NEXT_PUBLIC_API_URL` (from `.env.local`) for all API calls. API helpers live in `frontend/lib/api.ts`.
 - CORS is configured for `localhost:3000` and `*.vercel.app` — new endpoints are covered automatically.
-- All 113 tests pass on main. Do not break them.
+- All 115 tests pass on main. Do not break them.
 - **Port for this worktree:** `PORT=8090 make api` and `cd frontend && NEXT_PUBLIC_API_URL=http://localhost:8090 npm run dev`
-- Do not run `mypy` — pre-existing errors being fixed in wt6. Run `ruff check src/ tests/` only.
+- mypy is now passing (PR #40 merged) — run `ruff check src/ tests/` AND `mypy src/` before PR.
 
 ---
 
@@ -64,13 +64,13 @@ async def visual_summary(meeting_id: str) -> VisualSummaryResponse:
 
 ### Gemini call
 
-Use `google-generativeai` SDK (check if it's in `requirements.txt` — add if not):
+Use `google-generativeai` SDK (check if it's in `pyproject.toml` under `[project] dependencies` — add `"google-generativeai"` if not):
 
 ```python
 import google.generativeai as genai
 
 genai.configure(api_key=settings.gemini_api_key)
-model = genai.GenerativeModel("gemini-1.5-flash")
+model = genai.GenerativeModel("gemini-2.0-flash")
 
 prompt = f"""Analyse this meeting transcript and return a JSON object with:
 - speaker_breakdown: list of {{speaker, utterance_count, percentage}}
@@ -166,7 +166,7 @@ Verify `GEMINI_API_KEY=` is already in `.env.example` (it was added previously).
 - [ ] `POST /api/meetings/{id}/visual-summary` returns structured JSON
 - [ ] Returns 501 if `GEMINI_API_KEY` not set (graceful degradation)
 - [ ] Router registered in `src/api/main.py`
-- [ ] `google-generativeai` in `requirements.txt` (if not already)
+- [ ] `google-generativeai` in `pyproject.toml` dependencies (if not already)
 - [ ] Frontend Upload page shows visual summary after ingest (or silently skips if 501)
 - [ ] `pytest tests/ -m "not expensive"` — all pass
 - [ ] `ruff check src/ tests/` — clean
@@ -178,14 +178,14 @@ Verify `GEMINI_API_KEY=` is already in `.env.example` (it was added previously).
 ```bash
 git add src/api/routes/visual_summary.py src/api/main.py \
         frontend/lib/api.ts frontend/app/page.tsx \
-        requirements.txt tests/test_api.py
+        pyproject.toml tests/test_api.py
 git commit -m "feat: Gemini visual summary endpoint + frontend integration (#35)"
 gh pr create \
   --title "feat: upload-time visual summary via Gemini (#35)" \
   --body "Closes #35
 
 ## What this adds
-- POST /api/meetings/{id}/visual-summary — calls Gemini 1.5 Flash to return speaker breakdown, topic timeline, key moments
+- POST /api/meetings/{id}/visual-summary — calls Gemini 2.0 Flash to return speaker breakdown, topic timeline, key moments
 - Graceful 501 if GEMINI_API_KEY not set
 - Frontend Upload page shows visual summary card after ingest completes
 

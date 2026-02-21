@@ -16,6 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 export default function ChatPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
@@ -152,9 +154,9 @@ export default function ChatPage() {
               <CardTitle className="text-base">Answer</CardTitle>
             </CardHeader>
             <CardContent>
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {result.answer}
-              </p>
+              <div className="prose prose-sm max-w-none dark:prose-invert [&>*:first-child]:mt-0">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>{result.answer}</ReactMarkdown>
+              </div>
             </CardContent>
           </Card>
 
@@ -168,7 +170,11 @@ export default function ChatPage() {
                 <Card key={i} className="text-sm">
                   <CardContent className="pt-4 space-y-2">
                     <div className="flex items-center gap-2 flex-wrap">
-                      <Badge variant="outline">{source.speaker}</Badge>
+                      {source.speaker ? (
+                        <Badge variant="secondary">{source.speaker}</Badge>
+                      ) : (
+                        <Badge variant="outline" className="text-muted-foreground">Unknown speaker</Badge>
+                      )}
                       {source.start_time !== null && (
                         <Badge variant="secondary">
                           {formatTime(source.start_time)}
@@ -188,6 +194,11 @@ export default function ChatPage() {
                         </Badge>
                       )}
                     </div>
+                    {source.meeting_title && (
+                      <span className="text-xs text-muted-foreground">
+                        from: {source.meeting_title}
+                      </span>
+                    )}
                     <Separator />
                     <p className="text-muted-foreground leading-relaxed">
                       {source.content}

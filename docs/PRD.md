@@ -1,7 +1,7 @@
 # Product Requirements Document — Meeting Intelligence
 
 **Status:** Living document — updated as implementation progresses
-**Last updated:** 2026-02-19
+**Last updated:** 2026-02-21
 **Author:** Wayes Chawdoury
 
 ---
@@ -87,7 +87,7 @@ The choice to build this over the other options (code documentation assistant, c
 | F02 | Accept WebVTT format (.vtt) with timestamps | Must | ✅ Done |
 | F03 | Accept AssemblyAI JSON format with speaker diarization | Must | ✅ Done |
 | F04 | Accept MeetingBank JSON format | Must | ✅ Done |
-| F05 | Transcribe audio files (.mp3, .wav, .m4a) via AssemblyAI | Should | ❌ Broken — binary input crashes ingest endpoint; Issue #22 |
+| F05 | Transcribe audio files (.mp3, .wav, .m4a) via AssemblyAI | Should | ⚠️ Clean error — binary input now returns 400 with clear message (PR #36); full transcription flow deferred |
 | F06 | Parse and normalise all formats to a uniform `TranscriptSegment` structure | Must | ✅ Done |
 | F07 | Extract meeting-level metadata (title, speakers, duration) on ingest | Must | ✅ Done |
 
@@ -165,8 +165,8 @@ The choice to build this over the other options (code documentation assistant, c
 | F39 | Evaluate answer quality using Claude-as-judge: faithfulness, answer relevancy, context precision/recall | Must | ✅ Done — metrics implemented |
 | F40 | Strategy comparison: run evaluation across all chunking × retrieval combinations | Must | ✅ Done — comparison logic implemented |
 | F41 | Cross-check: run the same questions through RAG and full-transcript context-stuffing, compare results | Should | ✅ Done — cross-check implemented |
-| F42 | Functional evaluation runner that can be executed end-to-end | Must | ❌ Broken — `runner.py` has no `__main__` entry point; Issue #23 |
-| F43 | Actual evaluation results saved to `reports/` | Must | 🔲 Blocked by F42 |
+| F42 | Functional evaluation runner that can be executed end-to-end | Must | ✅ Done — entry point added + test coverage (PR #37) |
+| F43 | Actual evaluation results saved to `reports/` | Must | 🔲 Not yet run — framework ready, requires live API keys |
 
 **Note on evaluation approach:** The implementation uses Claude-as-judge rather than the RAGAS or DeepEval libraries. This was a deliberate choice: Claude-as-judge is more flexible for domain-specific quality criteria, requires no additional frameworks, and produces more interpretable output. The README currently (incorrectly) claims "RAGAS + DeepEval metrics" — this needs to be corrected as part of Issue #23.
 
@@ -179,7 +179,7 @@ The choice to build this over the other options (code documentation assistant, c
 | F46 | `GET /meetings` — list all ingested meetings | Must | ✅ Done |
 | F47 | `GET /meetings/{id}` — meeting detail including extracted items | Should | ✅ Done |
 | F48 | `POST /meetings/{id}/extract` — run structured extraction on a meeting | Should | ✅ Done |
-| F49 | Duplicate GET `/meetings/{id}/extract` endpoint removed | Must | ❌ Not done — Issue #25; currently returns malformed response |
+| F49 | Duplicate GET `/meetings/{id}/extract` endpoint removed | Must | ✅ Done — removed in PR #36 |
 | F50 | Strategy configurable per request via request body | Should | ✅ Done |
 | F51 | OpenAPI docs available at `/docs` | Should | ✅ Done (FastAPI default) |
 
@@ -201,7 +201,7 @@ The choice to build this over the other options (code documentation assistant, c
 | F58 | GitHub Actions CI: runs ruff, mypy, pytest on every push | Must | ✅ Done — added in PR #28 (Issue #25) |
 | F59 | Pre-commit hooks: ruff format + ruff check | Should | ✅ Done |
 | F60 | MeetingBank data loadable via `scripts/load_meetingbank.py` | Must | ⚠️ Script done; 30 JSON files downloaded; not yet loaded into live Supabase (Issue #26) |
-| F61 | Type checking passes cleanly (`mypy src/`) | Must | ❌ 218 pre-existing type errors — Issue #30 |
+| F61 | Type checking passes cleanly (`mypy src/`) | Must | ✅ Done — all 218 errors resolved (PR #40) |
 
 ### 4.12 Ingestion — Bulk and Enterprise Formats
 
@@ -220,16 +220,43 @@ The choice to build this over the other options (code documentation assistant, c
 
 | ID | Requirement | Priority | Phase 2 Status |
 |----|-------------|----------|----------------|
-| F65 | React/Next.js frontend replacing Streamlit as the demo-facing UI; Streamlit retained as dev/debug tool | Should | 🔲 Not started — Issue #32 |
-| F66 | Cloud deployment: FastAPI to Google Cloud Run; frontend to Vercel (once React is built); GitHub Actions deploy workflow | Should | 🔲 Not started — Issue #31 |
+| F65 | React/Next.js frontend replacing Streamlit as the demo-facing UI; Streamlit retained as dev/debug tool | Should | ✅ Done — Next.js 14 App Router frontend deployed to Vercel (PR #38) |
+| F66 | Cloud deployment: FastAPI to Google Cloud Run; frontend to Vercel (once React is built); GitHub Actions deploy workflow | Should | ✅ Done — Cloud Run live, Vercel live, NEXT_PUBLIC_API_URL configured (PRs #50, #51) |
 
 ### 4.15 Test Coverage
 
 | ID | Requirement | Priority | Phase 2 Status |
 |----|-------------|----------|----------------|
-| F67 | Integration tests with live Supabase: vector search, hybrid search, storage (marked `@pytest.mark.expensive`) | Must | 🔲 Not started — Issue #33 |
-| F68 | End-to-end pipeline test: ingest real transcript → chunk → embed → store → query → verify answer contains expected content (marked `@pytest.mark.expensive`) | Must | 🔲 Not started — Issue #33 |
-| F69 | Real MeetingBank fixtures in `tests/fixtures/meetingbank/` for meaningful test assertions | Should | 🔲 Not started — Issue #33 |
+| F67 | Integration tests with live Supabase: vector search, hybrid search, storage (marked `@pytest.mark.expensive`) | Must | ✅ Done — live integration tests added (PR #37) |
+| F68 | End-to-end pipeline test: ingest real transcript → chunk → embed → store → query → verify answer contains expected content (marked `@pytest.mark.expensive`) | Must | ✅ Done — end-to-end test added (PR #37) |
+| F69 | Real MeetingBank fixtures in `tests/fixtures/meetingbank/` for meaningful test assertions | Should | ✅ Done — MeetingBank fixtures added (PR #37) |
+
+### 4.16 Authentication (Wave 3)
+
+| ID | Requirement | Priority | Phase 3 Status |
+|----|-------------|----------|----------------|
+| F70 | Email/password login via Supabase Auth — login page, session management, route protection | Must | 🔲 In progress — Issue #52, WT10 |
+| F71 | Next.js middleware redirecting unauthenticated users to `/login` | Must | 🔲 In progress — Issue #52, WT10 |
+| F72 | Logout button in nav — clears session and redirects to `/login` | Must | 🔲 In progress — Issue #52, WT10 |
+
+**Design note:** Auth is entirely client-side via Supabase Auth + `@supabase/ssr`. No backend changes. The FastAPI layer is unchanged — it does not validate tokens, as the prototype does not require API-level auth. Route protection lives in Next.js middleware.
+
+### 4.17 Meeting Management UI (Wave 3)
+
+| ID | Requirement | Priority | Phase 3 Status |
+|----|-------------|----------|----------------|
+| F73 | `DELETE /api/meetings/{id}` — remove meeting and all associated chunks and extracted items | Must | 🔲 In progress — Issue #42, WT12 |
+| F74 | Delete button per meeting row in Meetings page — with AlertDialog confirmation before firing | Must | 🔲 In progress — Issue #42, WT12 |
+| F75 | Meeting title shown on source cards in chat — attribution visible when querying "All meetings" | Should | 🔲 In progress — Issue #43, WT12 |
+| F76 | `ChunkResult` model includes `meeting_title` field; populated by enrichment query in `search.py` | Should | 🔲 In progress — Issue #43, WT12 |
+
+### 4.18 Frontend Polish (Wave 3)
+
+| ID | Requirement | Priority | Phase 3 Status |
+|----|-------------|----------|----------------|
+| F77 | Markdown rendering in chat answers — Claude's markdown (headers, bullets, bold) renders correctly using `react-markdown` + `@tailwindcss/typography` | Must | 🔲 In progress — Issue #41, WT11 |
+| F78 | Null speaker graceful fallback — source cards show "Unknown speaker" badge when `speaker` is null | Should | 🔲 In progress — Issue #44, WT11 |
+| F79 | Null `num_speakers` graceful fallback in Meetings list — shows "—" instead of empty/undefined | Should | 🔲 In progress — Issue #44, WT11 |
 
 ---
 
@@ -248,7 +275,7 @@ The choice to build this over the other options (code documentation assistant, c
 ### Testability
 - Core pipeline logic (chunking, embedding, retrieval) is unit-testable without live API calls
 - Expensive API-calling tests marked `@pytest.mark.expensive` and excluded by default
-- 108 tests currently passing across unit and integration levels
+- 115 tests currently passing across unit and integration levels
 
 ### Portability
 - Environment variables control all external service configuration — no hardcoded values
@@ -256,7 +283,7 @@ The choice to build this over the other options (code documentation assistant, c
 - `docker compose up` from a fresh clone is the intended setup path
 
 ### Maintainability
-- Type hints required throughout (mypy strict mode — currently 218 errors to resolve)
+- Type hints required throughout (mypy passing cleanly — all 218 pre-existing errors resolved in PR #40)
 - Ruff for linting and formatting (currently passing cleanly)
 - `CLAUDE.md` ensures any AI coding session understands the project constraints
 - Strategy patterns are extensible — adding a new chunking strategy means implementing one interface, not changing call sites throughout the codebase
@@ -281,7 +308,7 @@ The MVP is a functional prototype demonstrating the core value proposition and a
 - **Audio transcription UI** — AssemblyAI is configured but the upload flow crashes on binary input; being fixed or removed
 - **Actual evaluation results** — the framework is built; the runner entry point needs fixing; results will be generated once that's resolved
 - **LLM and embedding model configurability** — hardcoded to Claude + OpenAI for now; LiteLLM abstraction planned for Phase 2
-- **Clean type checking** — 218 mypy errors identified; fixing them is the current priority (Issue #30)
+- **Clean type checking** — 218 mypy errors resolved in PR #40; mypy now passes cleanly
 - **Cross-encoder reranking** — discussed in architecture documentation; not implemented
 - **Auth and data isolation** — deliberate exclusion from prototype; documented in production roadmap
 
@@ -289,7 +316,7 @@ The MVP is a functional prototype demonstrating the core value proposition and a
 
 The codebase is functional but has several known issues that are explicitly tracked as open GitHub issues. These are not hidden: they were identified through a systematic post-implementation audit and documented publicly. The approach throughout has been to build things that work and acknowledge things that don't — a partially implemented feature that crashes is worse than a well-documented gap.
 
-The most significant outstanding item is the evaluation runner (Issue #23). The framework is there; generating actual numbers is the next immediate priority.
+The evaluation runner was fixed in PR #37. Generating actual evaluation results (F43) requires running against live API keys — the infrastructure is ready. The system is now deployed: FastAPI on Cloud Run, React frontend on Vercel.
 
 ---
 
@@ -365,3 +392,6 @@ The current pipeline accepts uploaded text files. With thin adapters for Teams G
 | Streamlit vs React for demo UI? | Keep Streamlit as dev/debug tool. React (Next.js) as the public-facing demo UI deployed to Vercel. FastAPI is API-only — frontend is a pure client with zero backend changes needed. | 2026-02-20 |
 | Zip upload for assessor convenience? | Add zip file upload supporting bulk ingestion of multiple transcripts. Assessors likely have a folder of Teams meeting exports — this removes friction from the demo. | 2026-02-20 |
 | Upload-time visual summary approach? | Run Claude extraction + Gemini visual generation immediately on upload, before RAG ingestion completes. Provides two distinct value propositions from one upload action. | 2026-02-20 |
+| Auth approach for frontend? | Supabase Auth with email/password, managed by `@supabase/ssr` in Next.js middleware. No backend changes — FastAPI remains unauthenticated at the API level for the prototype. Auth is a Next.js routing concern, not an API concern. | 2026-02-21 |
+| Cloud Run deployment strategy? | Cloud Run UI-based deploy (no gcloud CLI dependency) with GitHub Actions for CI. Frontend on Vercel with `NEXT_PUBLIC_API_URL` env var pointing to Cloud Run. No Docker changes needed — Cloud Run builds from the existing Dockerfile. | 2026-02-21 |
+| Meeting title in source cards — join in SQL or Python? | Python-side enrichment query (`_enrich_with_meeting_titles()`) — one extra DB query per search rather than modifying the Supabase RPC SQL function. Avoids touching the migration system. Acceptable at current scale. | 2026-02-21 |

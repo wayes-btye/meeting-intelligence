@@ -181,6 +181,18 @@
 **Decisions:**
 - Used Workload Identity Federation (keyless) for Cloud Run auth — no SA key JSON in secrets
 
+### [2026-02-21T00:00:00Z] — Task: Wave 3 setup — worktrees, context files, PRD update
+**Focus:** Spin up Wave 3 worktrees (wt10–wt12) and update all project docs
+**Done:**
+- Created worktrees wt10 (#52 auth), wt11 (#41+#44 frontend polish), wt12 (#42+#43 delete+title)
+- Wrote context files for all three; updated wt8/wt9 context files (mypy now passing, test count 115, pyproject.toml fix, Gemini model updated to 2.0-flash)
+- Updated PRD: fixed stale statuses (F42, F49, F61, F65, F66, F67-69), added sections 4.16–4.18, new decisions log entries
+**Next:**
+- Open Claude Code in wt10, wt11, wt12 and start Wave 3 implementation
+- Priority order: wt10 (#52 auth) → wt11 (#41+#44) → wt12 (#42+#43) alongside wt8/wt9
+**Decisions:**
+- Auth is client-side only (Supabase Auth + Next.js middleware) — FastAPI unchanged
+
 ### [2026-02-21T12:00:00Z] — Task: Supabase email/password auth (Issue #52)
 **Focus:** Add login page + middleware route protection to Next.js frontend
 **Done:**

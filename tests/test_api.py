@@ -1,6 +1,6 @@
 """Tests for API endpoints (no external API keys required)."""
 
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from fastapi import HTTPException as FastAPIHTTPException
 from fastapi.testclient import TestClient
@@ -87,6 +87,59 @@ def test_audio_upload_transcription_failure_returns_400_not_500():
 
     # MANUAL TEST REQUIRED: verify real AssemblyAI transcription end-to-end.
     # See CLAUDE.md § "Manual verification checklist" for steps.
+
+
+# --- Issue #42: DELETE /api/meetings/{id} endpoint ---
+
+def test_delete_meeting(client: TestClient) -> None:
+    """DELETE /meetings/{id} returns 204 when meeting exists.
+
+    Mocks all three Supabase delete calls so no live DB is required.
+    """
+    meeting_id = "test-meeting-uuid"
+
+    mock_supabase = MagicMock()
+    # chunks and extracted_items deletes return empty data (rows deleted)
+    mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = []
+    # meetings delete returns the deleted row so 404 is not raised
+    meetings_delete_result = MagicMock()
+    meetings_delete_result.data = [{"id": meeting_id, "title": "Test"}]
+
+    call_count = 0
+
+    def table_side_effect(name: str) -> MagicMock:
+        nonlocal call_count
+        call_count += 1
+        tbl = MagicMock()
+        if name == "meetings" and call_count >= 3:
+            # Third table() call is the meetings delete — return a row
+            tbl.delete.return_value.eq.return_value.execute.return_value = meetings_delete_result
+        else:
+            tbl.delete.return_value.eq.return_value.execute.return_value.data = []
+        return tbl
+
+    mock_supabase.table.side_effect = table_side_effect
+
+    with patch("src.api.routes.meetings.get_supabase_client", return_value=mock_supabase):
+        response = client.delete(f"/api/meetings/{meeting_id}")
+
+    assert response.status_code == 204
+
+
+def test_delete_nonexistent_meeting_returns_404(client: TestClient) -> None:
+    """DELETE /meetings/{id} returns 404 when meeting does not exist.
+
+    Mocks Supabase to return empty data for the meetings delete, simulating a
+    non-existent meeting ID.
+    """
+    mock_supabase = MagicMock()
+    # All deletes return empty data — meetings delete returns [] meaning not found
+    mock_supabase.table.return_value.delete.return_value.eq.return_value.execute.return_value.data = []
+
+    with patch("src.api.routes.meetings.get_supabase_client", return_value=mock_supabase):
+        response = client.delete("/api/meetings/nonexistent-id")
+
+    assert response.status_code == 404
 
 
 # --- Issue #25: GET /extract must not exist (only POST) ---

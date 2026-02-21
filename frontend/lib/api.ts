@@ -19,6 +19,7 @@ export interface SourceChunk {
   similarity: number | null;
   meeting_id: string | null;
   combined_score: number | null;
+  meeting_title?: string | null;
 }
 
 export interface QueryResponse {
@@ -92,6 +93,11 @@ export const api = {
     apiFetch<ExtractResponse>(`/api/meetings/${meetingId}/extract`, {
       method: "POST",
     }),
+
+  deleteMeeting: async (meetingId: string): Promise<void> => {
+    const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
+  },
 
   // strategy: "semantic" | "hybrid" (single retrieval strategy field)
   query: (

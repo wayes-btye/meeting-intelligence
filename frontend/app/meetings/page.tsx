@@ -37,6 +37,7 @@ export default function MeetingsPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [detail, setDetail] = useState<MeetingDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   // Load meeting list
   useEffect(() => {
@@ -61,11 +62,20 @@ export default function MeetingsPage() {
   }, [selected]);
 
   const handleDelete = async (id: string) => {
-    await api.deleteMeeting(id);
-    setMeetings((prev) => prev.filter((m) => m.id !== id));
-    if (selected === id) {
-      setSelected(null);
-      setDetail(null);
+    try {
+      await api.deleteMeeting(id);
+      setMeetings((prev) => prev.filter((m) => m.id !== id));
+      setPage((p) => {
+        const newTotal = Math.ceil((meetings.length - 1) / PAGE_SIZE);
+        return Math.min(p, Math.max(0, newTotal - 1));
+      });
+      if (selected === id) {
+        setSelected(null);
+        setDetail(null);
+      }
+      setDeleteError(null);
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete meeting');
     }
   };
 
@@ -105,6 +115,11 @@ export default function MeetingsPage() {
         </Card>
       ) : (
         <>
+          {/* Delete error */}
+          {deleteError && (
+            <p className="text-sm text-destructive mb-2">{deleteError}</p>
+          )}
+
           {/* Table */}
           <div className="rounded-md border overflow-hidden">
             <table className="w-full text-sm">
@@ -158,7 +173,7 @@ export default function MeetingsPage() {
                           </AlertDialogHeader>
                           <AlertDialogFooter>
                             <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => void handleDelete(m.id)} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                            <AlertDialogAction onClick={() => { void handleDelete(m.id); }} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
                               Delete
                             </AlertDialogAction>
                           </AlertDialogFooter>

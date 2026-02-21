@@ -1,9 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { ApiStatus } from "./api-status";
+import { createClient } from "@/lib/supabase";
+import { Button } from "@/components/ui/button";
 
 const links = [
   { href: "/", label: "Upload" },
@@ -13,6 +15,14 @@ const links = [
 
 export function Nav() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  async function handleSignOut() {
+    const supabase = createClient();
+    await supabase.auth.signOut();
+    router.push("/login");
+    router.refresh();
+  }
 
   return (
     <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
@@ -38,7 +48,12 @@ export function Nav() {
             ))}
           </nav>
         </div>
-        <ApiStatus />
+        <div className="flex items-center gap-3">
+          <ApiStatus />
+          <Button variant="outline" size="sm" onClick={handleSignOut}>
+            Sign out
+          </Button>
+        </div>
       </div>
     </header>
   );

@@ -96,6 +96,13 @@ async def get_meeting(meeting_id: str) -> MeetingDetail:
 @router.delete("/api/meetings/{meeting_id}", status_code=204)
 async def delete_meeting(meeting_id: str) -> None:
     """Delete a meeting and all its associated chunks and extracted items."""
+    import uuid as _uuid
+
+    try:
+        _uuid.UUID(meeting_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found") from None
+
     client = get_supabase_client()
     # Delete dependent rows first (foreign key safety)
     client.table("chunks").delete().eq("meeting_id", meeting_id).execute()
@@ -103,7 +110,7 @@ async def delete_meeting(meeting_id: str) -> None:
     result = client.table("meetings").delete().eq("id", meeting_id).execute()
     data = cast(list[dict[str, Any]], result.data)
     if not data:
-        raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found")
+        raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found") from None
 
 
 # Extraction is handled exclusively by POST /api/meetings/{meeting_id}/extract

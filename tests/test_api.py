@@ -96,7 +96,7 @@ def test_delete_meeting(client: TestClient) -> None:
 
     Mocks all three Supabase delete calls so no live DB is required.
     """
-    meeting_id = "test-meeting-uuid"
+    meeting_id = "12345678-1234-1234-1234-123456789abc"
 
     mock_supabase = MagicMock()
     # chunks and extracted_items deletes return empty data (rows deleted)

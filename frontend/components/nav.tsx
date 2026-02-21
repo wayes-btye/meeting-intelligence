@@ -24,6 +24,8 @@ export function Nav() {
     router.refresh();
   }
 
+  const isLoginPage = pathname === "/login";
+
   return (
     <header className="sticky top-0 z-10 border-b bg-background/95 backdrop-blur">
       <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-3">
@@ -31,29 +33,33 @@ export function Nav() {
           <Link href="/" className="font-bold text-lg tracking-tight">
             Meeting Intelligence
           </Link>
-          <nav className="flex items-center gap-1">
-            {links.map(({ href, label }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted",
-                  pathname === href
-                    ? "bg-muted text-foreground"
-                    : "text-muted-foreground",
-                )}
-              >
-                {label}
-              </Link>
-            ))}
-          </nav>
+          {!isLoginPage && (
+            <nav className="flex items-center gap-1">
+              {links.map(({ href, label }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "rounded-md px-3 py-1.5 text-sm font-medium transition-colors hover:bg-muted",
+                    pathname === href
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </Link>
+              ))}
+            </nav>
+          )}
         </div>
-        <div className="flex items-center gap-3">
-          <ApiStatus />
-          <Button variant="outline" size="sm" onClick={handleSignOut}>
-            Sign out
-          </Button>
-        </div>
+        {!isLoginPage && (
+          <div className="flex items-center gap-3">
+            <ApiStatus />
+            <Button variant="outline" size="sm" onClick={handleSignOut}>
+              Sign out
+            </Button>
+          </div>
+        )}
       </div>
     </header>
   );

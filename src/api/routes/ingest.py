@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import io
+import json
 import zipfile
 from typing import Annotated
 
@@ -48,7 +49,12 @@ def _transcribe_audio(raw: bytes) -> str:
     transcriber = aai.Transcriber()
     # speech_models (plural) is required by current AssemblyAI API — SDK 0.52 sends empty list
     # by default which the API rejects. Confirmed via API error: must be ["universal-3-pro"].
-    config = aai.TranscriptionConfig(speech_models=["universal-3-pro"])
+    # speaker_labels=True enables diarization — without it, the API returns a single flat text
+    # block attributed to no speaker. Fix for Issue #63.
+    config = aai.TranscriptionConfig(
+        speech_models=["universal-3-pro"],
+        speaker_labels=True,
+    )
 
     try:
         transcript = transcriber.transcribe(raw, config=config)
@@ -58,7 +64,15 @@ def _transcribe_audio(raw: bytes) -> str:
                 status_code=400,
                 detail=f"Transcription failed: {transcript.error}",
             )
-        return transcript.text or ""
+        # Return utterances as AssemblyAI JSON format so parse_json can extract speaker labels.
+        # Fallback to a single-utterance structure if utterances are unavailable (Issue #63).
+        utterances = transcript.utterances or []
+        return json.dumps({
+            "utterances": [
+                {"speaker": u.speaker, "text": u.text, "start": u.start, "end": u.end}
+                for u in utterances
+            ]
+        })
     except HTTPException:
         raise
     except Exception as exc:
@@ -124,9 +138,10 @@ async def ingest(
                     "Please upload a text transcript (.vtt, .txt, .json)."
                 ),
             )
-        # Run synchronous AssemblyAI SDK in a thread — avoids blocking the event loop
+        # Run synchronous AssemblyAI SDK in a thread — avoids blocking the event loop.
+        # _transcribe_audio returns AssemblyAI JSON (utterances) so parse_json preserves speakers.
         content = await asyncio.to_thread(_transcribe_audio, raw)
-        transcript_format = "text"
+        transcript_format = "json"
     else:
         # Text path: decode as UTF-8 (existing behaviour)
         content = raw.decode("utf-8")
@@ -243,8 +258,10 @@ def _ingest_zip(
                             "(set ASSEMBLYAI_API_KEY to enable audio files in zips)"
                         )
                         continue
+                    # _transcribe_audio returns AssemblyAI JSON (utterances) — use "json" format
+                    # so parse_json preserves speaker labels. Fix for Issue #63.
                     content = _transcribe_audio(file_bytes)
-                    transcript_format = "text"
+                    transcript_format = "json"
                 else:
                     content = file_bytes.decode("utf-8")
                     transcript_format = format_map[member_ext]

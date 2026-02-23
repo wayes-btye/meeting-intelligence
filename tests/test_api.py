@@ -295,7 +295,11 @@ def test_zip_audio_with_key_is_ingested():
     with (
         patch("src.api.routes.ingest.ingest_transcript", side_effect=fake_ingest),
         patch("src.api.routes.ingest.get_supabase_client", return_value=MagicMock()),
-        patch("src.api.routes.ingest._transcribe_audio", return_value="Transcribed audio text."),
+        patch(
+            "src.api.routes.ingest._transcribe_audio",
+            # _transcribe_audio now returns AssemblyAI JSON utterances (Issue #63 fix)
+            return_value='{"utterances": [{"speaker": "A", "text": "Transcribed audio text.", "start": 0, "end": 5000}]}',
+        ),
         patch("src.api.routes.ingest.settings") as mock_settings,
     ):
         mock_settings.assemblyai_api_key = "fake-key"

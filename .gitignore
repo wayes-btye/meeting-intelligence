@@ -16,6 +16,9 @@ __pycache__/
 .idea/
 *.swp
 *.swo
+.cursorindexingignore
+.specstory/
+.claude/settings.local.json
 
 # OS
 .DS_Store
@@ -31,6 +34,11 @@ build/
 
 # Downloaded datasets (large files)
 data/meetingbank/
+
+# Large test audio files (transcripts kept, raw audio excluded)
+tests/data/*.mp3
+tests/data/*.wav
+tests/data/*.m4a
 
 # Supabase local config
 supabase/.temp/

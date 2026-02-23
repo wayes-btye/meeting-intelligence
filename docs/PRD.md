@@ -168,7 +168,7 @@ The choice to build this over the other options (code documentation assistant, c
 | F42 | Functional evaluation runner that can be executed end-to-end | Must | ✅ Done — entry point added + test coverage (PR #37) |
 | F43 | Actual evaluation results saved to `reports/` | Must | 🔲 Not yet run — framework ready, requires live API keys |
 
-**Note on evaluation approach:** The implementation uses Claude-as-judge rather than the RAGAS or DeepEval libraries. This was a deliberate choice: Claude-as-judge is more flexible for domain-specific quality criteria, requires no additional frameworks, and produces more interpretable output. The README currently (incorrectly) claims "RAGAS + DeepEval metrics" — this needs to be corrected as part of Issue #23.
+**Note on evaluation approach:** The implementation uses Claude-as-judge rather than the RAGAS or DeepEval libraries. This was a deliberate choice: Claude-as-judge is more flexible for domain-specific quality criteria, requires no additional frameworks, and produces more interpretable output. The README has been corrected to reflect this (previously incorrectly stated "RAGAS + DeepEval metrics" — fixed in doc cleanup pass).
 
 ### 4.9 API
 
@@ -207,14 +207,15 @@ The choice to build this over the other options (code documentation assistant, c
 
 | ID | Requirement | Priority | Phase 2 Status |
 |----|-------------|----------|----------------|
-| F62 | Zip file upload: ingest multiple transcripts in one upload, each as a separate meeting | Should | 🔲 Not started — Issue #34 |
-| F63 | Microsoft Teams VTT format: explicit parser support for `<v SpeakerName>` inline tag format; currently the VTT parser likely loses speaker labels from Teams exports | Must | 🔲 Not started — Issue #34 |
+| F62 | Zip file upload: ingest multiple transcripts in one upload, each as a separate meeting | Should | ✅ Done — PR #58 (Issue #34). Zip bomb protection included. |
+| F63 | Microsoft Teams VTT format: explicit parser support for `<v SpeakerName>` inline tag format; currently the VTT parser likely loses speaker labels from Teams exports | Must | ✅ Done — PR #58 (Issue #34). Teams VTT parser added to `parsers.py`. |
 
 ### 4.13 Upload-time Visual Summary
 
 | ID | Requirement | Priority | Phase 2 Status |
 |----|-------------|----------|----------------|
-| F64 | On transcript upload, immediately display: extracted action items/decisions/topics (via direct Claude call) and a Gemini-generated visual summary (speaker breakdown, topic timeline) before RAG ingestion completes | Should | 🔲 Not started — Issue #35 |
+| F64 | On transcript upload, immediately display extracted action items/decisions/topics (via direct Claude call) — before RAG ingestion completes | Should | ✅ Done — extraction displayed on upload (PR #58 and prior) |
+| F64b | Upload-time visual summary image via Nano Banana Pro (Vertex AI Imagen 3) — speaker breakdown and topic visualisation | Should | ✅ Done — PR #62 (Issue #61). Vertex AI image generation implemented. |
 
 ### 4.14 Frontend and Deployment
 
@@ -235,9 +236,9 @@ The choice to build this over the other options (code documentation assistant, c
 
 | ID | Requirement | Priority | Phase 3 Status |
 |----|-------------|----------|----------------|
-| F70 | Email/password login via Supabase Auth — login page, session management, route protection | Must | 🔲 In progress — Issue #52, WT10 |
-| F71 | Next.js middleware redirecting unauthenticated users to `/login` | Must | 🔲 In progress — Issue #52, WT10 |
-| F72 | Logout button in nav — clears session and redirects to `/login` | Must | 🔲 In progress — Issue #52, WT10 |
+| F70 | Email/password login via Supabase Auth — login page, session management, route protection | Must | ✅ Done — PR #55 (Issue #52) |
+| F71 | Next.js middleware redirecting unauthenticated users to `/login` | Must | ✅ Done — PR #55 (Issue #52) |
+| F72 | Logout button in nav — clears session and redirects to `/login` | Must | ✅ Done — PR #55 (Issue #52) |
 
 **Design note:** Auth is entirely client-side via Supabase Auth + `@supabase/ssr`. No backend changes. The FastAPI layer is unchanged — it does not validate tokens, as the prototype does not require API-level auth. Route protection lives in Next.js middleware.
 
@@ -245,18 +246,18 @@ The choice to build this over the other options (code documentation assistant, c
 
 | ID | Requirement | Priority | Phase 3 Status |
 |----|-------------|----------|----------------|
-| F73 | `DELETE /api/meetings/{id}` — remove meeting and all associated chunks and extracted items | Must | 🔲 In progress — Issue #42, WT12 |
-| F74 | Delete button per meeting row in Meetings page — with AlertDialog confirmation before firing | Must | 🔲 In progress — Issue #42, WT12 |
-| F75 | Meeting title shown on source cards in chat — attribution visible when querying "All meetings" | Should | 🔲 In progress — Issue #43, WT12 |
-| F76 | `ChunkResult` model includes `meeting_title` field; populated by enrichment query in `search.py` | Should | 🔲 In progress — Issue #43, WT12 |
+| F73 | `DELETE /api/meetings/{id}` — remove meeting and all associated chunks and extracted items | Must | ✅ Done — PR #56 (Issue #42) |
+| F74 | Delete button per meeting row in Meetings page — with AlertDialog confirmation before firing | Must | ✅ Done — PR #56 (Issue #42) |
+| F75 | Meeting title shown on source cards in chat — attribution visible when querying "All meetings" | Should | ✅ Done — PR #56 (Issue #43) |
+| F76 | `ChunkResult` model includes `meeting_title` field; populated by enrichment query in `search.py` | Should | ✅ Done — PR #56 (Issue #43) |
 
 ### 4.18 Frontend Polish (Wave 3)
 
 | ID | Requirement | Priority | Phase 3 Status |
 |----|-------------|----------|----------------|
-| F77 | Markdown rendering in chat answers — Claude's markdown (headers, bullets, bold) renders correctly using `react-markdown` + `@tailwindcss/typography` | Must | 🔲 In progress — Issue #41, WT11 |
-| F78 | Null speaker graceful fallback — source cards show "Unknown speaker" badge when `speaker` is null | Should | 🔲 In progress — Issue #44, WT11 |
-| F79 | Null `num_speakers` graceful fallback in Meetings list — shows "—" instead of empty/undefined | Should | 🔲 In progress — Issue #44, WT11 |
+| F77 | Markdown rendering in chat answers — Claude's markdown (headers, bullets, bold) renders correctly using `react-markdown` + `@tailwindcss/typography` | Must | ✅ Done — PR #54 (Issue #41) |
+| F78 | Null speaker graceful fallback — source cards show "Unknown speaker" badge when `speaker` is null | Should | ✅ Done — PR #54 (Issue #44) |
+| F79 | Null `num_speakers` graceful fallback in Meetings list — shows "—" instead of empty/undefined | Should | ✅ Done — PR #54 (Issue #44) |
 
 ---
 
@@ -275,7 +276,7 @@ The choice to build this over the other options (code documentation assistant, c
 ### Testability
 - Core pipeline logic (chunking, embedding, retrieval) is unit-testable without live API calls
 - Expensive API-calling tests marked `@pytest.mark.expensive` and excluded by default
-- 115 tests currently passing across unit and integration levels
+- 132 tests currently passing across unit and integration levels
 
 ### Portability
 - Environment variables control all external service configuration — no hardcoded values

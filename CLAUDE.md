@@ -46,7 +46,7 @@ src/
   ingestion/      # Transcript parsing (.vtt/.txt/.json), chunking, embedding
   retrieval/      # Semantic + hybrid search, query processing
   extraction/     # Structured extraction (action items, decisions, topics)
-  evaluation/     # Test set generation, RAGAS/DeepEval metrics, cross-check
+  evaluation/     # Test set generation, Claude-as-judge metrics, cross-check (no RAGAS/DeepEval)
   ui/             # Streamlit application
 tests/            # pytest test suite
 data/             # Sample transcripts, MeetingBank subset

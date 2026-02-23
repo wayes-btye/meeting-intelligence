@@ -206,6 +206,18 @@
 - Logout button added to Nav component (minimal change — reused existing `Button` component)
 - Session handled entirely client-side via `@supabase/ssr` — no backend changes needed
 
+### [2026-02-23T06:00:00Z] — Session: AssemblyAI audio pipeline investigation
+**Focus:** End-to-end test of audio ingestion (YouTube MP3 -> AssemblyAI -> pipeline) and diagnosis of speaker-turn chunking failure
+**Done:**
+- Extracted audio from YouTube (https://www.youtube.com/watch?v=qGFoZ8yodc4) via Apify `marielise.dev/youtube-video-downloader`; saved as `tests/data/gitlab-engineering-meeting.mp3` (24 min, 26 MB)
+- Confirmed API ingest endpoint accepts MP3 and calls AssemblyAI end-to-end (credits working); diagnosed root cause: `_transcribe_audio` missing `speaker_labels=True` and discards utterance data by returning `transcript.text` — speaker-turn chunking degrades to 4 naive chunks
+- Verified fix direction with `tests/transcribe_sample.py`: `speaker_labels=True` produces 7 speakers + 88 utterances; saved `tests/data/gitlab-engineering-meeting.txt` and `.json` for reference; raised issue #63
+**Next:**
+- Implement fix from issue #63 (add `speaker_labels=True`, return utterances JSON, set `transcript_format="json"`) in a feature branch
+- Re-run ingest test with fixed code to confirm speaker-turn chunking produces meaningful per-speaker chunks
+**Decisions:**
+- `parse_json` already handles AssemblyAI utterances format — fix is entirely in `_transcribe_audio`, no parser changes needed
+
 ### [2026-02-21T00:00:00Z] — Task: Wave 3 PRs merged (#54, #56, #55)
 **Focus:** Merge all three Wave 3 feature PRs into main
 **Done:**

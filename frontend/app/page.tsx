@@ -10,13 +10,14 @@
 // 5. Single: expect extraction results. Zip: expect batch summary with N meetings + any errors.
 
 import { useCallback, useRef, useState } from "react";
-import { api, type BatchIngestResponse, type ExtractResponse, type IngestResponse } from "@/lib/api";
+import { api, type BatchIngestResponse, type ExtractResponse, type IngestResponse, type ImageSummaryResponse } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Separator } from "@/components/ui/separator";
 
 type Phase = "idle" | "uploading" | "extracting" | "done" | "error";
 
@@ -49,6 +50,9 @@ export default function UploadPage() {
   const [result, setResult] = useState<Result | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [imageSummary, setImageSummary] = useState<ImageSummaryResponse | null>(null);
+  const [imageSummaryLoading, setImageSummaryLoading] = useState(false);
+  const [imageSummaryError, setImageSummaryError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -69,6 +73,8 @@ export default function UploadPage() {
 
     setError(null);
     setResult(null);
+    setImageSummary(null);
+    setImageSummaryError(null);
     setPhase("uploading");
     setProgress(20);
 
@@ -93,6 +99,25 @@ export default function UploadPage() {
     } catch (err) {
       setPhase("error");
       setError(err instanceof Error ? err.message : "Upload failed");
+    }
+  };
+
+  const handleGenerateImageSummary = async (meetingId: string) => {
+    setImageSummaryLoading(true);
+    setImageSummaryError(null);
+    setImageSummary(null);
+    try {
+      const data = await api.imageSummary(meetingId);
+      setImageSummary(data);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to generate visual summary";
+      setImageSummaryError(
+        msg.includes("501")
+          ? "Visual summary unavailable: GOOGLE_API_KEY is not configured on the server."
+          : msg,
+      );
+    } finally {
+      setImageSummaryLoading(false);
     }
   };
 
@@ -360,6 +385,43 @@ export default function UploadPage() {
               </CardContent>
             </Card>
           )}
+
+          {/* Visual Summary */}
+          <Card>
+            <CardHeader>
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-base">Visual Summary</CardTitle>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { void handleGenerateImageSummary(result.ingest.meeting_id); }}
+                  disabled={imageSummaryLoading}
+                >
+                  {imageSummaryLoading ? "Generating…" : "Generate Visual Summary"}
+                </Button>
+              </div>
+            </CardHeader>
+            {(imageSummary || imageSummaryError) && (
+              <CardContent>
+                {imageSummaryError && (
+                  <p className="text-sm text-destructive rounded-md border border-destructive/30 bg-destructive/10 p-3">
+                    {imageSummaryError}
+                  </p>
+                )}
+                {imageSummary && (
+                  <>
+                    <Separator className="mb-4" />
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={`data:${imageSummary.mime_type};base64,${imageSummary.image_data}`}
+                      alt="Visual summary infographic"
+                      className="w-full rounded-md"
+                    />
+                  </>
+                )}
+              </CardContent>
+            )}
+          </Card>
         </div>
       )}
     </div>

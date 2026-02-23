@@ -106,3 +106,11 @@ class ExtractResponse(BaseModel):
     action_items: list[ExtractedItemResponse] = []
     decisions: list[ExtractedItemResponse] = []
     topics: list[ExtractedItemResponse] = []
+
+
+class ImageSummaryResponse(BaseModel):
+    """Response body for the /api/meetings/{id}/image-summary endpoint."""
+
+    meeting_id: str
+    image_data: str  # base64-encoded image
+    mime_type: str = "image/png"

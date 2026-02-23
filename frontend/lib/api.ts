@@ -76,6 +76,12 @@ export interface MeetingDetail {
   extracted_items: ExtractedItem[];
 }
 
+export interface ImageSummaryResponse {
+  meeting_id: string;
+  image_data: string; // base64-encoded image
+  mime_type: string;
+}
+
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, options);
   if (!res.ok) {
@@ -111,6 +117,11 @@ export const api = {
     const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, { method: 'DELETE' })
     if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
   },
+
+  imageSummary: (meetingId: string) =>
+    apiFetch<ImageSummaryResponse>(`/api/meetings/${meetingId}/image-summary`, {
+      method: "POST",
+    }),
 
   // strategy: "semantic" | "hybrid" (single retrieval strategy field)
   query: (

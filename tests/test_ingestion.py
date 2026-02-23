@@ -14,6 +14,65 @@ from src.ingestion.parsers import parse_json, parse_plain_text, parse_transcript
 FIXTURES_DIR = pathlib.Path(__file__).parent / "fixtures" / "meetingbank"
 
 
+class TestVTTTeamsFormat:
+    """Tests for Microsoft Teams-style <v SpeakerName> inline voice tags. Issue #34."""
+
+    def test_vtt_parser_teams_format_extracts_speaker(self) -> None:
+        """parse_vtt handles <v SpeakerName> Teams inline tags, extracting speaker and stripping tag."""
+        vtt_content = """WEBVTT
+
+00:00:01.000 --> 00:00:08.000
+<v Mayor Johnson>Good evening everyone.
+
+00:00:09.000 --> 00:00:18.000
+<v Council Member Davis>Thank you, Mayor."""
+        segments = parse_vtt(vtt_content)
+        assert len(segments) == 2
+        assert segments[0].speaker == "Mayor Johnson"
+        assert segments[0].text == "Good evening everyone."
+        assert segments[1].speaker == "Council Member Davis"
+        assert segments[1].text == "Thank you, Mayor."
+
+    def test_vtt_parser_teams_closing_tag_stripped(self) -> None:
+        """parse_vtt strips optional </v> closing tags in Teams format."""
+        vtt_content = """WEBVTT
+
+00:00:01.000 --> 00:00:05.000
+<v John Smith>Hello everyone.</v>"""
+        segments = parse_vtt(vtt_content)
+        assert len(segments) == 1
+        assert segments[0].speaker == "John Smith"
+        assert segments[0].text == "Hello everyone."
+
+    def test_vtt_parser_teams_fixture_file(self) -> None:
+        """parse_vtt correctly processes the teams_sample.vtt fixture file."""
+        import pathlib
+        fixture = pathlib.Path(__file__).parent / "fixtures" / "teams_sample.vtt"
+        content = fixture.read_text(encoding="utf-8")
+        segments = parse_vtt(content)
+        assert len(segments) == 3
+        speakers = [s.speaker for s in segments]
+        assert "Mayor Johnson" in speakers
+        assert "Council Member Davis" in speakers
+        # Mayor Johnson appears twice
+        assert speakers.count("Mayor Johnson") == 2
+
+    def test_vtt_parser_standard_format_unaffected(self) -> None:
+        """Standard VTT with colon-style speaker labels still works correctly after Teams support."""
+        vtt = """WEBVTT
+
+00:00:01.000 --> 00:00:05.000
+Speaker 1: Hello everyone.
+
+00:00:06.000 --> 00:00:10.000
+Speaker 2: Hi there.
+"""
+        segments = parse_vtt(vtt)
+        assert len(segments) == 2
+        assert segments[0].speaker == "Speaker 1"
+        assert segments[1].speaker == "Speaker 2"
+
+
 class TestVTTParser:
     def test_basic_vtt(self) -> None:
         vtt = """WEBVTT

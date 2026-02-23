@@ -75,6 +75,18 @@ class IngestResponse(BaseModel):
     chunking_strategy: ChunkingStrategy
 
 
+class BatchIngestResponse(BaseModel):
+    """Response body for the /api/ingest endpoint when a .zip file is uploaded.
+
+    Each .vtt/.txt/.json inside the zip is ingested as a separate meeting.
+    Issue #34 — zip bulk upload.
+    """
+
+    meetings_ingested: int
+    meeting_ids: list[str]
+    errors: list[str]
+
+
 class ExtractedItemResponse(BaseModel):
     """A single extracted item in API responses."""
 

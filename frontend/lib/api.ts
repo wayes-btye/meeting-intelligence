@@ -22,11 +22,16 @@ export interface SourceChunk {
   meeting_title?: string | null;
 }
 
+export interface UsageInfo {
+  input_tokens: number;
+  output_tokens: number;
+}
+
 export interface QueryResponse {
   answer: string;
   sources: SourceChunk[];
   model: string | null;
-  usage: Record<string, unknown> | null;
+  usage: UsageInfo | null;
 }
 
 export interface IngestResponse {

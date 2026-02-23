@@ -323,6 +323,30 @@ Rename the context file to `MERGED_` and record the PR number and merge date.
 - Required keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ASSEMBLYAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`
 - Config loaded via Pydantic BaseSettings (validates on startup)
 
+## Infrastructure & Deployment
+
+### Cloud Run (API backend)
+- **GCP Project:** `meeting-intelligence-488107` (region: `europe-west1`)
+- **Service:** `meeting-intelligence-api`
+- **URL:** `https://meeting-intelligence-api-893899075779.europe-west1.run.app`
+- **CI/CD:** Cloud Build triggers automatically on every push to `main` — no GitHub Actions needed
+- **gcloud CLI is available** — use it to inspect services, check build status, describe configs
+  ```bash
+  gcloud config set project meeting-intelligence-488107
+  gcloud run services list --platform managed
+  gcloud builds list --limit 5
+  gcloud run services describe meeting-intelligence-api --region europe-west1
+  ```
+
+### Vercel (frontend)
+- **Project:** `meeting-intelligence-wc` (team: `wayes-btyes-projects`)
+- **Production URL:** `https://meeting-intelligence-wc.vercel.app`
+- **Vercel CLI is available** — use it to inspect deployments and env vars
+  ```bash
+  vercel list --scope wayes-btyes-projects
+  ```
+- `NEXT_PUBLIC_API_URL` is set in Vercel dashboard to the Cloud Run URL above
+
 ## MCP Server Usage
 
 ### Supabase MCP

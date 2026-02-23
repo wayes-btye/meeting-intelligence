@@ -240,3 +240,16 @@
 - Manual test: real zip upload + real Teams VTT file before merge
 **Decisions:**
 - `_ingest_zip()` is a sync helper called from async `ingest()` — acceptable since zip extraction is CPU-bound and fast; no async needed for the extraction loop itself
+
+### [2026-02-23T00:00:00Z] — Session: Portfolio review pass + public repo preparation
+**Focus:** Prepare repo for technical reviewer — fix bugs, rewrite docs, add reviewer guide
+**Done:**
+- Fixed Issue #63 (speaker diarization): `speaker_labels=True` + utterances JSON return in `_transcribe_audio`; both single-file and zip audio paths updated; tests updated; 129/132 pass
+- Full README rewrite: updated architecture diagram, corrected RAGAS→Claude-as-judge, React as primary UI, Live Demo section, Streamlit→React rationale
+- Added `REVIEWER-GUIDE.md` (root), `docs/engineering-philosophy.md` (Streamlit→React, CI/CD, worktrees, RAG stages, testing)
+- PRD status flags corrected: F62/F63/F64b/F70-F79 all updated to ✅ Done; test count corrected to 132
+**Next:**
+- Make repo public (GitHub Settings → Visibility → Public)
+- Clean test meetings from live Supabase; load 10 MeetingBank meetings for demo corpus
+**Decisions:**
+- MP3 test file excluded from git (26MB); JSON + TXT transcripts committed as evidence for #63

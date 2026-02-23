@@ -193,10 +193,10 @@ export default function ChatPage() {
                   )}
                 </p>
               )}
-              {/* Empty-state note for structured DB lookups (zero chunks retrieved) */}
+              {/* Empty-state note: no transcript chunks used (structured DB lookup or no RAG matches) */}
               {result.sources.length === 0 && (
                 <p className="text-xs text-muted-foreground italic mt-1">
-                  Answer retrieved from structured database — no transcript chunks retrieved.
+                  No transcript chunks were used for this answer.
                 </p>
               )}
             </CardContent>

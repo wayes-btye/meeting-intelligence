@@ -9,7 +9,7 @@
 // 5. Click a row — expect a detail panel below with action items, decisions, topics
 
 import { useEffect, useState } from "react";
-import { api, type Meeting, type MeetingDetail } from "@/lib/api";
+import { api, type Meeting, type MeetingDetail, type ImageSummaryResponse } from "@/lib/api";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -232,6 +232,10 @@ export default function MeetingsPage() {
 }
 
 function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
+  const [imageSummary, setImageSummary] = useState<ImageSummaryResponse | null>(null);
+  const [imageSummaryLoading, setImageSummaryLoading] = useState(false);
+  const [imageSummaryError, setImageSummaryError] = useState<string | null>(null);
+
   const actionItems = detail.extracted_items.filter(
     (i) => i.item_type === "action_item",
   );
@@ -239,6 +243,29 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
     (i) => i.item_type === "decision",
   );
   const topics = detail.extracted_items.filter((i) => i.item_type === "topic");
+
+  const hasTranscript = Boolean(detail.raw_transcript);
+
+  const handleGenerateImageSummary = async () => {
+    setImageSummaryLoading(true);
+    setImageSummaryError(null);
+    setImageSummary(null);
+    try {
+      const result = await api.imageSummary(detail.id);
+      setImageSummary(result);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : "Failed to generate visual summary";
+      if (msg.includes("501")) {
+        setImageSummaryError(
+          "Visual summary is not available: GOOGLE_API_KEY is not configured on the server.",
+        );
+      } else {
+        setImageSummaryError(msg);
+      }
+    } finally {
+      setImageSummaryLoading(false);
+    }
+  };
 
   return (
     <Card>
@@ -260,7 +287,7 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
             {actionItems.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-3">
-                  ✅ Action Items ({actionItems.length})
+                  Action Items ({actionItems.length})
                 </h3>
                 <ul className="space-y-2">
                   {actionItems.map((item, i) => (
@@ -288,7 +315,7 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
             {decisions.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-3">
-                  🏛️ Decisions ({decisions.length})
+                  Decisions ({decisions.length})
                 </h3>
                 <ul className="space-y-1.5">
                   {decisions.map((d, i) => (
@@ -309,7 +336,7 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
             {topics.length > 0 && (
               <div>
                 <h3 className="font-semibold text-sm mb-3">
-                  🏷️ Topics ({topics.length})
+                  Topics ({topics.length})
                 </h3>
                 <div className="flex flex-wrap gap-2">
                   {topics.map((t, i) => (
@@ -352,7 +379,7 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
           </details>
         )}
 
-        {/* Full Transcript — collapsible raw text */}
+        {/* Full Transcript -- collapsible raw text */}
         {detail.raw_transcript && (
           <details className="mt-2">
             <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
@@ -362,6 +389,44 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
               {detail.raw_transcript}
             </pre>
           </details>
+        )}
+
+        {/* Visual Summary section -- only shown when meeting has a transcript */}
+        {hasTranscript && (
+          <>
+            <Separator />
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-sm">Visual Summary</h3>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => { void handleGenerateImageSummary(); }}
+                  disabled={imageSummaryLoading}
+                >
+                  {imageSummaryLoading ? "Generating..." : "Generate Visual Summary"}
+                </Button>
+              </div>
+
+              {imageSummaryError && (
+                <div className="rounded-md border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">
+                  {imageSummaryError}
+                </div>
+              )}
+
+              {imageSummary && (
+                <div className="rounded-md border overflow-hidden">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`data:${imageSummary.mime_type};base64,${imageSummary.image_data}`}
+                    alt="Visual summary infographic for this meeting"
+                    className="w-full"
+                  />
+                </div>
+              )}
+            </div>
+          </>
+        )}
         )}
       </CardContent>
     </Card>

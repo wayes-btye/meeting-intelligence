@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.api.routes.extraction import router as extraction_router
+from src.api.routes.image_summary import router as image_summary_router
 from src.api.routes.ingest import router as ingest_router
 from src.api.routes.meetings import router as meetings_router
 from src.api.routes.query import router as query_router
@@ -28,6 +29,7 @@ app.include_router(ingest_router)
 app.include_router(query_router)
 app.include_router(meetings_router)
 app.include_router(extraction_router)
+app.include_router(image_summary_router)
 
 
 @app.get("/health")

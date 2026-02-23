@@ -1,5 +1,5 @@
 # Worktree WT13 — Issue #47
-**Status:** `PLANNED` — worktree not yet created
+**Status:** `ACTIVE` — PR #59 open, branch `feat/47-chunk-viewer`, worktree at `C:\meeting-intelligence-wt13-issue-47`
 
 ---
 

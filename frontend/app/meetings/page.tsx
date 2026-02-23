@@ -322,6 +322,47 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
             )}
           </>
         )}
+
+        {/* Chunks — collapsible, ordered as returned by the API (chunk_index order) */}
+        {detail.chunks.length > 0 && (
+          <details className="mt-4">
+            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+              Chunks ({detail.chunks.length})
+            </summary>
+            <div className="mt-2 space-y-2 max-h-96 overflow-y-auto">
+              {detail.chunks.map((chunk, i) => (
+                <div key={i} className="border rounded p-3 space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <Badge variant="outline" className="text-xs">#{i}</Badge>
+                    {chunk.speaker ? (
+                      <Badge variant="secondary" className="text-xs">{chunk.speaker}</Badge>
+                    ) : (
+                      <Badge variant="outline" className="text-xs text-muted-foreground">Unknown speaker</Badge>
+                    )}
+                    {chunk.start_time !== null && chunk.start_time !== undefined && (
+                      <span className="text-xs text-muted-foreground">
+                        {formatSeconds(chunk.start_time)} &rarr; {formatSeconds(chunk.end_time ?? chunk.start_time)}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm">{chunk.content}</p>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+
+        {/* Full Transcript — collapsible raw text */}
+        {detail.raw_transcript && (
+          <details className="mt-2">
+            <summary className="cursor-pointer text-sm font-medium text-muted-foreground hover:text-foreground">
+              Full Transcript
+            </summary>
+            <pre className="mt-2 text-xs whitespace-pre-wrap bg-muted p-3 rounded max-h-96 overflow-y-auto">
+              {detail.raw_transcript}
+            </pre>
+          </details>
+        )}
       </CardContent>
     </Card>
   );
@@ -333,4 +374,11 @@ function formatDate(iso: string): string {
     month: "short",
     year: "numeric",
   });
+}
+
+/** Format a timestamp in seconds as mm:ss (e.g. 75.3 → "1:15"). */
+function formatSeconds(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s.toString().padStart(2, "0")}`;
 }

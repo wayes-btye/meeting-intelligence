@@ -42,6 +42,13 @@ async def generate_image_summary(meeting_id: str) -> ImageSummaryResponse:
             detail="Image summary not available: GOOGLE_API_KEY is not configured.",
         )
 
+    # Validate UUID format before hitting Supabase (malformed IDs cause a 500 from PostgREST)
+    import uuid as _uuid
+    try:
+        _uuid.UUID(meeting_id)
+    except ValueError:
+        raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found") from None
+
     # Fetch meeting transcript from Supabase
     client = get_supabase_client()
     result = client.table("meetings").select("id, raw_transcript").eq("id", meeting_id).execute()

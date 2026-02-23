@@ -427,7 +427,6 @@ function MeetingDetailPanel({ detail }: { detail: MeetingDetail }) {
             </div>
           </>
         )}
-        )}
       </CardContent>
     </Card>
   );

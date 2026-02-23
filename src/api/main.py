@@ -15,10 +15,8 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://localhost:8501",
-    ],
+    allow_origins=[],
+    # Allow any localhost port (covers all worktree frontends) + Vercel previews/prod
     allow_origin_regex=r"https://.*\.vercel\.app|http://localhost:\d+",
     allow_credentials=False,
     allow_methods=["*"],

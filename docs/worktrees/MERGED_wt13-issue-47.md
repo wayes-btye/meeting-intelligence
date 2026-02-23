@@ -1,5 +1,5 @@
 # Worktree WT13 — Issue #47
-**Status:** `ACTIVE` — PR #59 open, branch `feat/47-chunk-viewer`, worktree at `C:\meeting-intelligence-wt13-issue-47`
+**Status:** `MERGED` — PR merged 2026-02-23. Directory pending manual delete.
 
 ---
 

@@ -1,5 +1,5 @@
 # Worktree WT15 — Issue #49
-**Status:** `ACTIVE` — Phase 1 implemented, PR #60 open
+**Status:** `MERGED` — PR merged 2026-02-23. Directory pending manual delete.
 
 ---
 

@@ -1,5 +1,5 @@
 # Worktree WT17 — Issue #61
-**Status:** `ACTIVE` — worktree at `C:\meeting-intelligence-wt17-issue-61`
+**Status:** `MERGED` — PR merged 2026-02-23. Directory pending manual delete.
 **Branch:** `feat/61-image-summary`
 
 ---

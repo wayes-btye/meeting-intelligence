@@ -224,7 +224,7 @@ def test_zip_upload_skips_non_transcript_files():
 
 
 def test_zip_bomb_member_count_rejected():
-    """Zip with more than MAX_ZIP_MEMBERS files is rejected with 400."""
+    """Zip with more than MAX_ZIP_MEMBERS files is rejected with 413."""
     from src.api.routes.ingest import MAX_ZIP_MEMBERS
 
     buf = io.BytesIO()
@@ -238,7 +238,7 @@ def test_zip_bomb_member_count_rejected():
         files={"file": ("bomb.zip", buf, "application/zip")},
         data={"title": "Bomb"},
     )
-    assert response.status_code == 400
+    assert response.status_code == 413
     assert "maximum" in response.json()["detail"].lower()
 
 

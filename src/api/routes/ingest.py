@@ -22,9 +22,9 @@ router = APIRouter()
 MAX_UPLOAD_BYTES = 50 * 1024 * 1024
 
 # Zip bomb protection: limits applied per-member and across all members
-MAX_ZIP_MEMBERS = 200
+MAX_ZIP_MEMBERS = 50
 MAX_ZIP_MEMBER_BYTES = 100 * 1024 * 1024   # 100 MB per individual file
-MAX_ZIP_TOTAL_BYTES = 500 * 1024 * 1024    # 500 MB total expanded across all members
+MAX_ZIP_TOTAL_BYTES = 200 * 1024 * 1024    # 200 MB total expanded across all members
 
 # Extensions treated as audio — routed to AssemblyAI transcription
 AUDIO_EXTENSIONS = {"mp3", "wav", "m4a", "mp4", "ogg", "flac"}
@@ -164,9 +164,9 @@ def _ingest_zip(
     transcribed via AssemblyAI (skipped with an error entry if no API key is configured).
     Non-supported files are silently skipped.
 
-    Zip bomb protection: rejects archives exceeding MAX_ZIP_MEMBERS members, any individual
-    member exceeding MAX_ZIP_MEMBER_BYTES uncompressed, or total expansion exceeding
-    MAX_ZIP_TOTAL_BYTES. Checks use ZipInfo.file_size (the declared uncompressed size),
+    Zip bomb protection: rejects archives exceeding MAX_ZIP_MEMBERS (50) members, any individual
+    member exceeding MAX_ZIP_MEMBER_BYTES (100 MB) uncompressed, or total expansion exceeding
+    MAX_ZIP_TOTAL_BYTES (200 MB). Checks use ZipInfo.file_size (the declared uncompressed size),
     which is fast and avoids reading before validating.
 
     Title pattern: ``"{zip_stem}/{filename_without_ext}"``.
@@ -196,7 +196,7 @@ def _ingest_zip(
         # Zip bomb guard: member count
         if len(members) > MAX_ZIP_MEMBERS:
             raise HTTPException(
-                status_code=400,
+                status_code=413,
                 detail=f"Zip contains {len(members)} files; maximum is {MAX_ZIP_MEMBERS}.",
             )
 
@@ -204,7 +204,7 @@ def _ingest_zip(
         total_uncompressed = sum(m.file_size for m in members)
         if total_uncompressed > MAX_ZIP_TOTAL_BYTES:
             raise HTTPException(
-                status_code=400,
+                status_code=413,
                 detail=(
                     f"Zip would expand to {total_uncompressed // (1024 * 1024)} MB; "
                     f"maximum is {MAX_ZIP_TOTAL_BYTES // (1024 * 1024)} MB."

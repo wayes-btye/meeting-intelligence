@@ -321,6 +321,7 @@ Rename the context file to `MERGED_` and record the PR number and merge date.
 ## Environment
 - Copy `.env.example` to `.env` and fill in API keys
 - Required keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `ASSEMBLYAI_API_KEY`, `SUPABASE_URL`, `SUPABASE_KEY`
+- Optional keys: `GOOGLE_API_KEY` (Gemini image summary — graceful 501 if absent)
 - Config loaded via Pydantic BaseSettings (validates on startup)
 
 ## Infrastructure & Deployment

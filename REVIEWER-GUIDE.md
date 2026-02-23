@@ -138,7 +138,7 @@ supabase/migrations/               # pgvector setup, HNSW index, hybrid_search()
 ### Prerequisites
 - Python 3.11+, Node.js 18+
 - Supabase project (free tier works)
-- API keys: Anthropic, OpenAI, AssemblyAI
+- API keys: Anthropic, OpenAI, AssemblyAI, Google (optional — for image summary)
 
 ### Setup
 ```bash
@@ -148,6 +148,7 @@ cd meeting-intelligence
 # Environment
 cp .env.example .env
 # Edit .env: add ANTHROPIC_API_KEY, OPENAI_API_KEY, ASSEMBLYAI_API_KEY, SUPABASE_URL, SUPABASE_KEY
+# Optional: GOOGLE_API_KEY for image summary (https://aistudio.google.com/apikey)
 
 pip install -e ".[dev]"
 

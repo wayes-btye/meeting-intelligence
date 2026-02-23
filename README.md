@@ -205,11 +205,13 @@ npm run dev              # macOS/Linux
 
 **`/.env` (API backend):**
 ```
-ANTHROPIC_API_KEY=        # Claude API
-OPENAI_API_KEY=           # Embeddings
-ASSEMBLYAI_API_KEY=       # Audio transcription
+ANTHROPIC_API_KEY=        # Claude API (generation, extraction, evaluation)
+OPENAI_API_KEY=           # Embeddings (text-embedding-3-small)
+ASSEMBLYAI_API_KEY=       # Audio transcription with speaker diarization
 SUPABASE_URL=             # Your Supabase project URL
 SUPABASE_KEY=             # Your Supabase anon/service key
+GOOGLE_API_KEY=           # Gemini image summary (optional — graceful 501 if absent)
+                          # Get from: https://aistudio.google.com/apikey
 ```
 
 **`/frontend/.env.local` (React frontend):**

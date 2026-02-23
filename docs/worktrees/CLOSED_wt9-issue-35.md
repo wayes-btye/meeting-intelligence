@@ -1,5 +1,5 @@
 # Worktree WT9 — Issue #35
-**Status:** `ACTIVE` — worktree at `C:\meeting-intelligence-wt9-issue-35`
+**Status:** `CLOSED` — PR #57 rejected 2026-02-23. Issue #35 closed. Superseded by new image generation issue (Nano Banana Pro). Physical directory `C:\meeting-intelligence-wt9-issue-35` — delete manually.
 **Branch:** `feat/35-gemini-visual-summary`
 **Created from:** main @ 75209d7
 **Worktree path:** `C:\meeting-intelligence-wt9-issue-35`

@@ -40,6 +40,7 @@ async def query(
         items = lookup_extracted_items(
             meeting_id=request.meeting_id,
             item_type=routed.item_type,
+            user_id=user_id,
         )
         answer = format_structured_response(items, routed.item_type)
         return QueryResponse(

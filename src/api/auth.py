@@ -20,6 +20,9 @@ async def get_current_user_id(authorization: str = Header(...)) -> str:
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Bearer token")
     token = authorization.removeprefix("Bearer ")
+    # Fail closed: an empty secret would let PyJWT accept forged HS256 tokens. (#71)
+    if not settings.supabase_jwt_secret:
+        raise HTTPException(status_code=503, detail="Auth service not configured")
     try:
         payload = jwt.decode(
             token,
@@ -29,4 +32,4 @@ async def get_current_user_id(authorization: str = Header(...)) -> str:
         )
         return str(payload["sub"])
     except jwt.PyJWTError as exc:
-        raise HTTPException(status_code=401, detail=f"Invalid token: {exc}") from exc
+        raise HTTPException(status_code=401, detail="Invalid token") from exc

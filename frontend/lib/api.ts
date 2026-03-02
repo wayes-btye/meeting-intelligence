@@ -106,6 +106,8 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API ${res.status}: ${text}`);
   }
+  // 204 No Content — no body to parse (e.g. DELETE).
+  if (res.status === 204) return undefined as T;
   return res.json() as Promise<T>;
 }
 
@@ -131,21 +133,8 @@ export const api = {
       method: "POST",
     }),
 
-  deleteMeeting: async (meetingId: string): Promise<void> => {
-    const supabase = createClient();
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    const headers: Record<string, string> = {};
-    if (session?.access_token) {
-      headers["Authorization"] = `Bearer ${session.access_token}`;
-    }
-    const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, {
-      method: "DELETE",
-      headers,
-    });
-    if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
-  },
+  deleteMeeting: (meetingId: string): Promise<void> =>
+    apiFetch<void>(`/api/meetings/${meetingId}`, { method: "DELETE" }),
 
   imageSummary: (meetingId: string) =>
     apiFetch<ImageSummaryResponse>(`/api/meetings/${meetingId}/image-summary`, {

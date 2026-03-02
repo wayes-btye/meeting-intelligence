@@ -60,18 +60,24 @@ async def get_meeting(
 ) -> MeetingDetail:
     """Get full meeting details. Returns 404 if not found or not owned by caller."""
     client = get_supabase_client()
-    result = client.table("meetings").select("*").eq("id", meeting_id).execute()
+    # Filter by both id and user_id at DB level — avoids fetching the full row
+    # (including raw_transcript) before confirming ownership. (#71)
+    result = (
+        client.table("meetings")
+        .select("*")
+        .eq("id", meeting_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
 
     # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
     detail_rows = cast(list[dict[str, Any]], result.data)
     if not detail_rows:
+        # Returns 404 whether the meeting is missing or belongs to another user,
+        # to avoid revealing existence. (#71)
         raise HTTPException(status_code=404, detail="Meeting not found")
 
     m = detail_rows[0]
-
-    # Raise 404 (not 403) to avoid revealing whether the meeting exists. (#71)
-    if m.get("user_id") != user_id:
-        raise HTTPException(status_code=404, detail="Meeting not found")
 
     # Get chunks
     chunks_result = (

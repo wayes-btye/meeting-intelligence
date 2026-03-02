@@ -175,16 +175,12 @@ def test_list_meetings_filters_by_user_id() -> None:
 def test_get_meeting_wrong_owner_returns_404() -> None:
     """GET /api/meetings/{id} returns 404 when meeting belongs to a different user.
 
-    The endpoint must not reveal existence — always 404 on ownership mismatch.
-    Uses the autouse auth bypass (returns TEST_USER_ID) but the meeting row in
-    the mock has a different user_id, triggering the ownership check.
+    The endpoint filters by both id and user_id at DB level, so a row owned by
+    another user is never returned — the empty result triggers the 404.
     """
-    other_user_id = "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"
-
     mock_client = MagicMock()
-    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = [
-        {"id": TEST_MEETING_ID, "title": "Someone else's meeting", "user_id": other_user_id}
-    ]
+    # DB-level filter (id + user_id) returns nothing for a non-owned meeting.
+    mock_client.table.return_value.select.return_value.eq.return_value.eq.return_value.execute.return_value.data = []
 
     with (
         patch("src.api.routes.meetings.get_supabase_client", return_value=mock_client),
@@ -196,4 +192,61 @@ def test_get_meeting_wrong_owner_returns_404() -> None:
 
     assert response.status_code == 404, (
         f"Expected 404 for ownership mismatch, got {response.status_code}: {response.text}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Unconfigured JWT secret → 503
+# ---------------------------------------------------------------------------
+
+
+def test_unconfigured_jwt_secret_returns_503(real_auth_client: TestClient) -> None:
+    """If SUPABASE_JWT_SECRET is empty, auth must return 503, not 401 or 500.
+
+    An empty secret would allow PyJWT to accept HS256 tokens signed with "".
+    The fail-closed guard must fire before jwt.decode is called. (#71)
+    """
+    with patch("src.api.auth.settings") as mock_settings:
+        mock_settings.supabase_jwt_secret = ""
+        response = real_auth_client.get(
+            "/api/meetings",
+            headers={"Authorization": "Bearer some.jwt.token"},
+        )
+    assert response.status_code == 503, (
+        f"Expected 503 for unconfigured secret, got {response.status_code}: {response.text}"
+    )
+
+
+# ---------------------------------------------------------------------------
+# Structured query path — user isolation
+# ---------------------------------------------------------------------------
+
+
+def test_structured_query_passes_user_id_to_lookup() -> None:
+    """POST /api/query for a structured question passes user_id to lookup_extracted_items.
+
+    Verifies the structured path (action items, decisions, topics) is scoped to
+    the authenticated user's meetings and cannot return other users' data. (#71)
+    """
+    from unittest.mock import call
+
+    mock_client = MagicMock()
+    # Return an empty meeting list for the user — lookup should return [] early.
+    mock_client.table.return_value.select.return_value.eq.return_value.execute.return_value.data = []
+
+    with patch("src.retrieval.router.get_supabase_client", return_value=mock_client):
+        response = TestClient(app).post(
+            "/api/query",
+            json={"question": "What were the action items?"},
+            headers={"Authorization": "Bearer fake-token"},
+        )
+
+    assert response.status_code == 200, (
+        f"Expected 200, got {response.status_code}: {response.text}"
+    )
+    # Verify the meetings table was queried with eq("user_id", TEST_USER_ID)
+    # — proof that user_id reached lookup_extracted_items.
+    eq_calls = mock_client.table.return_value.select.return_value.eq.call_args_list
+    assert any(c == call("user_id", TEST_USER_ID) for c in eq_calls), (
+        f"Expected eq('user_id', {TEST_USER_ID!r}) in Supabase calls, got: {eq_calls}"
     )

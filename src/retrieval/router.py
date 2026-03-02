@@ -130,18 +130,36 @@ def classify_query(question: str) -> RoutedQuery:
 def lookup_extracted_items(
     meeting_id: str | None = None,
     item_type: str | None = None,
+    user_id: str | None = None,
 ) -> list[dict[str, Any]]:
     """Query the extracted_items table directly.
 
     Args:
         meeting_id: Optional filter by meeting.
         item_type: Optional filter by type (``"action_item"``, ``"decision"``, ``"topic"``).
+        user_id: If provided, restricts results to this user's meetings. (#71)
 
     Returns:
         List of extracted item dicts from the database.
     """
     client = get_supabase_client()
-    query = client.table("extracted_items").select("*")
+
+    if user_id:
+        # Resolve the caller's meeting IDs first; extracted_items has no user_id
+        # column so we must filter via a join through meetings. (#71)
+        meetings_result = (
+            client.table("meetings").select("id").eq("user_id", user_id).execute()
+        )
+        user_meeting_ids = [
+            r["id"] for r in cast(list[dict[str, Any]], meetings_result.data)
+        ]
+        if not user_meeting_ids:
+            return []
+        query = client.table("extracted_items").select("*").in_(
+            "meeting_id", user_meeting_ids
+        )
+    else:
+        query = client.table("extracted_items").select("*")
 
     if meeting_id:
         query = query.eq("meeting_id", meeting_id)

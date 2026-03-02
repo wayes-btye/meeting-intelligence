@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
-from anthropic import APIStatusError
-from fastapi import APIRouter, HTTPException
+from typing import Annotated
 
+from anthropic import APIStatusError
+from fastapi import APIRouter, Depends, HTTPException
+
+from src.api.auth import get_current_user_id
 from src.api.models import QueryRequest, QueryResponse
 from src.retrieval.generation import generate_answer
 from src.retrieval.router import (
@@ -19,8 +22,13 @@ router = APIRouter()
 
 
 @router.post("/api/query", response_model=QueryResponse)
-async def query(request: QueryRequest) -> QueryResponse:
+async def query(
+    request: QueryRequest,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+) -> QueryResponse:
     """Answer a question using structured lookup or RAG over meeting transcripts.
+
+    All results are scoped to the authenticated user's meetings. (#71)
 
     The query router classifies the question:
     - Structured queries (action items, decisions, topics) -> direct DB lookup
@@ -41,11 +49,12 @@ async def query(request: QueryRequest) -> QueryResponse:
             usage=None,
         )
 
-    # Open-ended: use existing RAG pipeline
+    # Open-ended: use existing RAG pipeline scoped to this user's meetings
     chunks = search(
         request.question,
         retrieval_strategy=request.strategy,
         meeting_id=request.meeting_id,
+        user_id=user_id,
     )
 
     if not chunks:

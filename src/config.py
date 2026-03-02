@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     # Supabase
     supabase_url: str = ""
     supabase_key: str = ""
+    supabase_jwt_secret: str = ""  # From Supabase dashboard → Settings → API → JWT Secret
 
     # App config
     api_host: str = "0.0.0.0"

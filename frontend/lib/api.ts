@@ -1,4 +1,6 @@
 // API client — all calls go to FastAPI backend, never to Supabase directly
+import { createClient } from "@/lib/supabase";
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // --- Types matching actual API schemas ---
@@ -83,7 +85,23 @@ export interface ImageSummaryResponse {
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, options);
+  const supabase = createClient();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const headers: Record<string, string> = {
+    ...(options?.headers as Record<string, string> ?? {}),
+  };
+  if (session?.access_token) {
+    headers["Authorization"] = `Bearer ${session.access_token}`;
+  }
+  // Set Content-Type for JSON bodies only — FormData (ingest) sets its own boundary.
+  if (options?.body && !(options.body instanceof FormData)) {
+    headers["Content-Type"] = "application/json";
+  }
+
+  const res = await fetch(`${API_URL}${path}`, { ...options, headers });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
     throw new Error(`API ${res.status}: ${text}`);
@@ -114,8 +132,19 @@ export const api = {
     }),
 
   deleteMeeting: async (meetingId: string): Promise<void> => {
-    const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, { method: 'DELETE' })
-    if (!res.ok) throw new Error(`Delete failed: ${res.status}`)
+    const supabase = createClient();
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    const headers: Record<string, string> = {};
+    if (session?.access_token) {
+      headers["Authorization"] = `Bearer ${session.access_token}`;
+    }
+    const res = await fetch(`${API_URL}/api/meetings/${meetingId}`, {
+      method: "DELETE",
+      headers,
+    });
+    if (!res.ok) throw new Error(`Delete failed: ${res.status}`);
   },
 
   imageSummary: (meetingId: string) =>
@@ -131,7 +160,6 @@ export const api = {
   ) =>
     apiFetch<QueryResponse>("/api/query", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         question,
         meeting_id: meetingId || null,

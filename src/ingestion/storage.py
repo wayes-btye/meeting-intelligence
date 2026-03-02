@@ -24,6 +24,7 @@ def store_meeting(
     transcript_format: str | None = None,
     duration_seconds: int | None = None,
     num_speakers: int | None = None,
+    user_id: str | None = None,
 ) -> str:
     """Store meeting metadata and return the generated meeting ID."""
     result = (
@@ -36,6 +37,7 @@ def store_meeting(
                 "transcript_format": transcript_format,
                 "duration_seconds": duration_seconds,
                 "num_speakers": num_speakers,
+                "user_id": user_id,
             }
         )
         .execute()

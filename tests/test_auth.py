@@ -35,8 +35,8 @@ def real_auth_client():
 # ---------------------------------------------------------------------------
 
 
-def test_unauthenticated_ingest_returns_401(real_auth_client: TestClient) -> None:
-    """POST /api/ingest without an Authorization header must return 401."""
+def test_unauthenticated_ingest_returns_422(real_auth_client: TestClient) -> None:
+    """POST /api/ingest without an Authorization header must return 422."""
     response = real_auth_client.post(
         "/api/ingest",
         files={"file": ("test.vtt", b"WEBVTT\n\n", "text/vtt")},
@@ -47,7 +47,7 @@ def test_unauthenticated_ingest_returns_401(real_auth_client: TestClient) -> Non
     )
 
 
-def test_unauthenticated_list_meetings_returns_401(real_auth_client: TestClient) -> None:
+def test_unauthenticated_list_meetings_returns_422(real_auth_client: TestClient) -> None:
     """GET /api/meetings without an Authorization header must return 422."""
     response = real_auth_client.get("/api/meetings")
     assert response.status_code == 422, (
@@ -55,7 +55,7 @@ def test_unauthenticated_list_meetings_returns_401(real_auth_client: TestClient)
     )
 
 
-def test_unauthenticated_query_returns_401(real_auth_client: TestClient) -> None:
+def test_unauthenticated_query_returns_422(real_auth_client: TestClient) -> None:
     """POST /api/query without an Authorization header must return 422."""
     response = real_auth_client.post(
         "/api/query",

@@ -323,6 +323,63 @@ def test_zip_audio_with_key_is_ingested():
     assert data["errors"] == []
 
 
+# --- Issue #48: chunking_strategy passed through ingest and returned in response ---
+
+def test_ingest_chunking_strategy_in_response(client: TestClient) -> None:
+    """POST /api/ingest returns chunking_strategy in the IngestResponse.
+
+    Mocks ingest_transcript and get_supabase_client so no external API calls are made.
+    Verifies that the selected chunking strategy is echoed back in the response.
+    """
+    vtt_content = b"WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nHello world.\n"
+
+    mock_supabase = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 2
+
+    with (
+        patch(
+            "src.api.routes.ingest.ingest_transcript",
+            return_value="12345678-1234-1234-1234-123456789abc",
+        ),
+        patch("src.api.routes.ingest.get_supabase_client", return_value=mock_supabase),
+    ):
+        response = client.post(
+            "/api/ingest",
+            files={"file": ("test.vtt", vtt_content, "text/vtt")},
+            data={"title": "Strategy Test", "chunking_strategy": "naive"},
+        )
+
+    assert response.status_code == 200, f"Expected 200, got {response.status_code}: {response.text}"
+    data = response.json()
+    assert data["chunking_strategy"] == "naive"
+    assert data["meeting_id"] == "12345678-1234-1234-1234-123456789abc"
+
+
+def test_ingest_speaker_turn_strategy_in_response(client: TestClient) -> None:
+    """POST /api/ingest with speaker_turn strategy returns correct chunking_strategy."""
+    vtt_content = b"WEBVTT\n\n00:00:01.000 --> 00:00:05.000\nHello world.\n"
+
+    mock_supabase = MagicMock()
+    mock_supabase.table.return_value.select.return_value.eq.return_value.execute.return_value.count = 1
+
+    with (
+        patch(
+            "src.api.routes.ingest.ingest_transcript",
+            return_value="12345678-1234-1234-1234-123456789abc",
+        ),
+        patch("src.api.routes.ingest.get_supabase_client", return_value=mock_supabase),
+    ):
+        response = client.post(
+            "/api/ingest",
+            files={"file": ("test.vtt", vtt_content, "text/vtt")},
+            data={"title": "Strategy Test", "chunking_strategy": "speaker_turn"},
+        )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["chunking_strategy"] == "speaker_turn"
+
+
 # --- Issue #25: GET /extract must not exist (only POST) ---
 def test_extract_endpoint_no_get_method():
     """GET /api/meetings/{id}/extract must not exist — only POST should.

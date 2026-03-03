@@ -129,6 +129,7 @@ export default function MeetingsPage() {
                   <th className="text-left px-4 py-3 font-medium">Date</th>
                   <th className="text-right px-4 py-3 font-medium">Chunks</th>
                   <th className="text-right px-4 py-3 font-medium">Speakers</th>
+                  <th className="text-right px-4 py-3 font-medium">Strategy</th>
                   <th className="text-right px-4 py-3 font-medium">Actions</th>
                 </tr>
               </thead>
@@ -153,6 +154,15 @@ export default function MeetingsPage() {
                     <td className="px-4 py-3 text-right">
                       {m.num_speakers !== null ? (
                         <Badge variant="outline">{m.num_speakers}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {m.chunking_strategy ? (
+                        <Badge variant="outline" className="text-xs">
+                          {m.chunking_strategy}
+                        </Badge>
                       ) : (
                         <span className="text-muted-foreground text-xs">—</span>
                       )}

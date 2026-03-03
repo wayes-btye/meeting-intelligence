@@ -62,6 +62,7 @@ def ingest_transcript(
         transcript_format=format,
         num_speakers=num_speakers or None,
         user_id=user_id,
+        chunking_strategy=chunking_strategy.value,
     )
     store_chunks(client, meeting_id, chunks_with_embeddings)
 

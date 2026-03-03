@@ -48,6 +48,7 @@ async def list_meetings(
                 num_speakers=m.get("num_speakers"),
                 created_at=m.get("created_at"),
                 chunk_count=chunks.count or 0,
+                chunking_strategy=m.get("chunking_strategy"),
             )
         )
     return meetings
@@ -112,6 +113,7 @@ async def get_meeting(
             for c in cast(list[dict[str, Any]], chunks_result.data)
         ],
         extracted_items=cast(list[dict[str, Any]], items_result.data),
+        chunking_strategy=m.get("chunking_strategy"),
     )
 
 

@@ -11,10 +11,10 @@ automated pytest suite (which uses `tests/fixtures/` instead).
 | `gitlab-engineering-meeting.mp3` | [YouTube](https://www.youtube.com/watch?v=qGFoZ8yodc4) | 24 min | GitLab Engineering Key Review, Feb 2021. First test file; used to diagnose issue #63 (speaker diarization). |
 | `gitlab-engineering-meeting.txt` | AssemblyAI output | — | Plain text transcript of the above. Committed. |
 | `gitlab-engineering-meeting.json` | AssemblyAI output | — | Full utterances + speaker labels (88 utterances, 7 speakers). Committed. |
-| `gitlab-product-marketing-weekly-2021-06-28.mp3` | [YouTube](https://www.youtube.com/watch?v=lBVtvOpU80Q) | 43 min | GitLab Product Marketing weekly meeting, Jun 2021. |
-| `gitlab-unfiltered-2021-06-28-k8K6wQLxooU.mp3` | [YouTube](https://www.youtube.com/watch?v=k8K6wQLxooU) | TBD | GitLab Unfiltered meeting. |
-| `gitlab-unfiltered-2021-06-28-1lzK6EYO800.mp3` | [YouTube](https://www.youtube.com/watch?v=1lzK6EYO800) | TBD | GitLab Unfiltered meeting. |
-| `gitlab-unfiltered-2021-06-28-rOqgRiNMVqg.mp3` | [YouTube](https://www.youtube.com/watch?v=rOqgRiNMVqg) | TBD | GitLab Unfiltered meeting. |
+| `gitlab-product-marketing-weekly-2021-06-28.mp3` | [YouTube](https://www.youtube.com/watch?v=lBVtvOpU80Q) | 43 min | GitLab Product Marketing Weekly meeting, Jun 2021. |
+| `gitlab-product-team-meeting-2019-07-09.mp3` | [YouTube](https://www.youtube.com/watch?v=k8K6wQLxooU) | 43 min | GitLab Product Team Meeting, Jul 2019. |
+| `gitlab-code-review-weekly-2022-09-30.mp3` | [YouTube](https://www.youtube.com/watch?v=1lzK6EYO800) | 34 min | GitLab Code Review Weekly Workshop, Sep 2022. |
+| `gitlab-sec-growth-datascience-2022-09-14.mp3` | [YouTube](https://www.youtube.com/watch?v=rOqgRiNMVqg) | 29 min | GitLab Sec Growth DataScience staff meeting, Sep 2022. |
 
 > MP3 files are gitignored (large binaries). TXT and JSON transcripts are committed where available.
 

@@ -302,3 +302,26 @@
 - Issue #48 (chunking_strategy column) migration still pending
 **Decisions:**
 - No new env vars needed in Cloud Run/Vercel — JWKS approach derives URL from SUPABASE_URL already set
+
+### [2026-03-03T01:00:00Z] — Task: Contextual Retrieval (Issue #66, WT18)
+**Focus:** Prepend Claude-generated context to chunk text before embedding
+**Done:**
+- Added `generate_chunk_context()` and `embed_chunks_with_context()` to `src/ingestion/embeddings.py`
+- Added `contextual_retrieval: bool = False` to `PipelineConfig` in `src/pipeline_config.py`; wired into `ingest_transcript()` and the ingest route as a Form field
+- 17 new tests in `tests/test_contextual_retrieval.py`; 155 tests pass total; ruff + mypy clean; PR opened against main
+**Next:**
+- Manual test via API on port 8180 with `contextual_retrieval=true` (demo branch — merge not required)
+**Decisions:**
+- Used `isinstance(block, TextBlock)` pattern (existing codebase convention) to satisfy mypy on Anthropic SDK union type
+
+### [2026-03-03T13:00:00Z] — Session: Merge PRs #73 and #74
+**Focus:** Post-merge cleanup for chunking strategy (#48) and contextual retrieval (#66)
+**Done:**
+- Migration `20260303121138_add_chunking_strategy_to_meetings.sql` applied from main workspace
+- PR #73 (#48) merged — chunking strategy visible on upload form and meetings list
+- PR #74 (#66) merged — contextual retrieval opt-in via `contextual_retrieval=true` form field
+**Next:**
+- Close WT18 terminal to allow worktree directory removal
+- Issue #48 and #66 to be closed on GitHub
+**Decisions:**
+- Applied migration before merge to avoid window where code writes to non-existent column

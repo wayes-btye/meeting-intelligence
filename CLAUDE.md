@@ -249,6 +249,7 @@ Use `PORT=XXXX make api` and `STREAMLIT_PORT=YYYY make streamlit` — the Makefi
 | WT15 (issue-49) | frontend-only | uses main :8000 |
 | WT16 (issue-71) | :8160 | — |
 | WT17 (issue-61) | :8170 | — |
+| WT18 (issue-66) | :8180 | — |
 
 Example: `PORT=8060 make api` to start the API on port 8060 from WT6.
 

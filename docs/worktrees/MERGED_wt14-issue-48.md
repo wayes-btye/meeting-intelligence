@@ -1,5 +1,5 @@
 # Worktree WT14 — Issue #48
-**Status:** `PLANNED` — worktree not yet created
+**Status:** `MERGED` — PR #73 merged 2026-03-03. Migration applied. Branch deleted.
 
 ---
 
@@ -25,17 +25,22 @@ This issue requires a schema change. **Do not apply the migration without explic
 
 Write the migration file and stop. State clearly in your PR and issue comment: "Migration written but NOT applied — awaiting user instruction."
 
-**Coordinate with #45 (projects/namespacing)** — that issue also adds a column to `meetings`. If both are running simultaneously, their migrations must not be applied concurrently. Check with the user before applying.
+**#45 is closed/superseded by #71 (per-user isolation, PR #72, merged 2026-03-03).** No conflict. Migration sequence: initial schema → `20260302000000_add_user_id_to_meetings.sql` (#71, applied) → this migration (next in sequence).
 
 ---
 
 ## Your mission
 
-Show the chunking strategy (naive vs speaker-turn) used for each meeting in the meetings list. This requires:
-1. A new `chunking_strategy` column on the `meetings` table
-2. `store_meeting()` to write the value on ingest
-3. `GET /api/meetings` to return the value
-4. Meetings list UI to display it
+Three connected improvements to make chunking visible to users:
+
+1. **Upload form info block** (frontend only) — below the Chunking Strategy radio buttons, show a parameter info block that updates on selection, matching the Retrieval Strategy UI pattern already in place:
+   - Naive selected: `chunk_size: 500 tokens · overlap: 50 tokens` + "Splits the transcript into fixed-size windows regardless of speaker boundaries."
+   - Speaker Turn selected: `max_chunk_size: 500 tokens · split: on speaker change` + "One chunk per continuous speaker segment — preserves conversational context."
+   - Values are static from `src/config.py` (chunk_size=500, chunk_overlap=50). No API calls needed.
+
+2. **Store chunking strategy on ingest** (migration + backend) — new `chunking_strategy` column on the `meetings` table, populated on ingest.
+
+3. **Show strategy in meetings list** (frontend) — strategy badge on each meeting card/row.
 
 ---
 
@@ -93,7 +98,27 @@ Read `src/api/models.py`. Add `chunking_strategy: str | None = None` to `Meeting
 
 Update `GET /api/meetings` in `meetings.py` to include `chunking_strategy` in the returned data. Read `meetings.py` first.
 
-### Step 5 — Update Frontend
+### Step 5a — Upload form info block (frontend)
+
+Read `frontend/app/upload/page.tsx` (or wherever the upload form lives) in full first. Find the Chunking Strategy radio buttons. Add a dynamic info block below them that updates based on the selected value — identical pattern to the Retrieval Strategy info block in the chat UI.
+
+```tsx
+{chunkingStrategy === 'naive' ? (
+  <p className="text-xs text-muted-foreground mt-1">
+    <span className="font-mono">chunk_size: 500 tokens · overlap: 50 tokens</span><br/>
+    Splits the transcript into fixed-size windows regardless of speaker boundaries.
+  </p>
+) : (
+  <p className="text-xs text-muted-foreground mt-1">
+    <span className="font-mono">max_chunk_size: 500 tokens · split: on speaker change</span><br/>
+    One chunk per continuous speaker segment — preserves conversational context.
+  </p>
+)}
+```
+
+Read the existing retrieval strategy info block in the chat UI first to match the exact styling.
+
+### Step 5b — Meetings list strategy column (frontend)
 
 Read `frontend/app/meetings/page.tsx` in full first.
 
@@ -162,6 +187,7 @@ def test_ingest_stores_chunking_strategy(client: TestClient) -> None:
 - [ ] `store_meeting()` accepts `chunking_strategy` param
 - [ ] Ingest route passes strategy through to storage
 - [ ] `MeetingResponse` includes `chunking_strategy` field
+- [ ] Upload form shows parameter info block below chunking strategy radio buttons
 - [ ] Meetings list UI shows Strategy column (gracefully shows `—` for null)
 - [ ] `pytest tests/ -m "not expensive"` — all pass
 - [ ] `ruff check` clean, `mypy src/` clean

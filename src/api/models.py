@@ -49,6 +49,7 @@ class MeetingSummary(BaseModel):
     num_speakers: int | None = None
     created_at: str | None = None
     chunk_count: int = 0
+    chunking_strategy: str | None = None
 
 
 class MeetingDetail(BaseModel):
@@ -64,6 +65,7 @@ class MeetingDetail(BaseModel):
     summary: str | None = None
     chunks: list[SourceChunk] = []
     extracted_items: list[dict[str, Any]] = []
+    chunking_strategy: str | None = None
 
 
 class IngestResponse(BaseModel):

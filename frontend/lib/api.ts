@@ -11,6 +11,7 @@ export interface Meeting {
   created_at: string;
   chunk_count: number;
   num_speakers: number | null;
+  chunking_strategy?: string | null;
 }
 
 export interface SourceChunk {
@@ -76,6 +77,7 @@ export interface MeetingDetail {
   summary: string | null;
   chunks: SourceChunk[];
   extracted_items: ExtractedItem[];
+  chunking_strategy?: string | null;
 }
 
 export interface ImageSummaryResponse {

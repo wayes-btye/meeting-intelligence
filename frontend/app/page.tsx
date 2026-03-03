@@ -200,6 +200,20 @@ export default function UploadPage() {
               </label>
             ))}
           </div>
+
+          {/* Parameter info block — updates based on selected chunking strategy */}
+          <div className="text-xs text-muted-foreground bg-muted/50 rounded p-2 space-y-1 mt-2">
+            {chunking === "naive" ? (
+              <p><span className="font-mono">chunk_size: 500 tokens · overlap: 50 tokens</span></p>
+            ) : (
+              <p><span className="font-mono">max_chunk_size: 500 tokens · split: on speaker change</span></p>
+            )}
+            <p className="opacity-70">
+              {chunking === "naive"
+                ? "Splits the transcript into fixed-size windows regardless of speaker boundaries."
+                : "One chunk per continuous speaker segment — preserves conversational context."}
+            </p>
+          </div>
         </fieldset>
 
         {/* Progress */}

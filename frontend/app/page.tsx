@@ -21,7 +21,7 @@ import { Separator } from "@/components/ui/separator";
 
 type Phase = "idle" | "uploading" | "extracting" | "done" | "error";
 
-const ACCEPTED_EXTS = [".vtt", ".txt", ".json", ".zip"];
+const ACCEPTED_EXTS = [".vtt", ".txt", ".json", ".zip", ".mp3", ".wav", ".m4a", ".mp4", ".ogg", ".flac"];
 
 /** Type guard: distinguishes a zip BatchIngestResponse from a single IngestResponse. */
 function isBatchResponse(r: IngestResponse | BatchIngestResponse): r is BatchIngestResponse {
@@ -61,7 +61,7 @@ export default function UploadPage() {
     const dropped = e.dataTransfer.files[0];
     if (!dropped) return;
     if (!ACCEPTED_EXTS.some((ext) => dropped.name.endsWith(ext))) {
-      setError("Unsupported file type. Drop a .vtt, .txt, .json, or .zip file.");
+      setError("Unsupported file type. Drop a .vtt, .txt, .json, .zip, or audio file (.mp3, .wav, .m4a, .mp4, .ogg, .flac).");
       return;
     }
     setFile(dropped);
@@ -151,7 +151,7 @@ export default function UploadPage() {
           <input
             ref={fileInputRef}
             type="file"
-            accept=".vtt,.txt,.json,.zip"
+            accept=".vtt,.txt,.json,.zip,.mp3,.wav,.m4a,.mp4,.ogg,.flac"
             className="hidden"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
           />

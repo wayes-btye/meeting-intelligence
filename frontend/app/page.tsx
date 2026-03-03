@@ -1,13 +1,8 @@
 "use client";
 
 // Upload Page — POST /api/ingest (chunking_strategy), then POST /api/meetings/{id}/extract
-// Accepts .vtt/.txt/.json (single meeting) and .zip (batch — multiple meetings, no auto-extract).
-// MANUAL VISUAL CHECK REQUIRED:
-// 1. Start API: PORT=8080 bash scripts/start-api.sh (WT8)
-// 2. Start frontend: cd frontend && npm run dev -- --turbo
-// 3. Visit http://localhost:3000
-// 4. Drag a .vtt/.txt/.json or .zip onto the drop zone, set a title, click Upload
-// 5. Single: expect extraction results. Zip: expect batch summary with N meetings + any errors.
+// Accepts .vtt/.txt/.json (transcript), .zip (batch), and audio files (.mp3/.wav/.m4a/.mp4/.ogg/.flac).
+// Audio files are routed to AssemblyAI for transcription before ingestion.
 
 import { useCallback, useRef, useState } from "react";
 import { api, type BatchIngestResponse, type ExtractResponse, type IngestResponse, type ImageSummaryResponse } from "@/lib/api";
@@ -165,9 +160,9 @@ export default function UploadPage() {
             </div>
           ) : (
             <div className="text-center">
-              <p className="font-medium">Drop transcript here</p>
+              <p className="font-medium">Drop file here</p>
               <p className="text-sm text-muted-foreground mt-1">
-                Accepts .vtt, .txt, .json, .zip
+                Accepts .vtt, .txt, .json, .zip, .mp3, .wav, .m4a, .mp4, .ogg, .flac
               </p>
             </div>
           )}

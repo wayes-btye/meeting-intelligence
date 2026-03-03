@@ -2,11 +2,12 @@
 
 from __future__ import annotations
 
-from typing import Any, cast
+from typing import Annotated, Any, cast
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from postgrest import CountMethod
 
+from src.api.auth import get_current_user_id
 from src.api.models import MeetingDetail, MeetingSummary, SourceChunk
 from src.ingestion.storage import get_supabase_client
 
@@ -14,10 +15,18 @@ router = APIRouter()
 
 
 @router.get("/api/meetings", response_model=list[MeetingSummary])
-async def list_meetings() -> list[MeetingSummary]:
-    """List all meetings ordered by creation date (newest first)."""
+async def list_meetings(
+    user_id: Annotated[str, Depends(get_current_user_id)],
+) -> list[MeetingSummary]:
+    """List meetings belonging to the authenticated user, newest first."""
     client = get_supabase_client()
-    result = client.table("meetings").select("*").order("created_at", desc=True).execute()
+    result = (
+        client.table("meetings")
+        .select("*")
+        .eq("user_id", user_id)
+        .order("created_at", desc=True)
+        .execute()
+    )
 
     # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
     rows = cast(list[dict[str, Any]], result.data)
@@ -45,14 +54,27 @@ async def list_meetings() -> list[MeetingSummary]:
 
 
 @router.get("/api/meetings/{meeting_id}", response_model=MeetingDetail)
-async def get_meeting(meeting_id: str) -> MeetingDetail:
-    """Get full meeting details including chunks and extracted items."""
+async def get_meeting(
+    meeting_id: str,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+) -> MeetingDetail:
+    """Get full meeting details. Returns 404 if not found or not owned by caller."""
     client = get_supabase_client()
-    result = client.table("meetings").select("*").eq("id", meeting_id).execute()
+    # Filter by both id and user_id at DB level — avoids fetching the full row
+    # (including raw_transcript) before confirming ownership. (#71)
+    result = (
+        client.table("meetings")
+        .select("*")
+        .eq("id", meeting_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
 
     # Supabase .data is typed as JSON (broad union); cast to concrete type. (#30)
     detail_rows = cast(list[dict[str, Any]], result.data)
     if not detail_rows:
+        # Returns 404 whether the meeting is missing or belongs to another user,
+        # to avoid revealing existence. (#71)
         raise HTTPException(status_code=404, detail="Meeting not found")
 
     m = detail_rows[0]
@@ -94,8 +116,15 @@ async def get_meeting(meeting_id: str) -> MeetingDetail:
 
 
 @router.delete("/api/meetings/{meeting_id}", status_code=204)
-async def delete_meeting(meeting_id: str) -> None:
-    """Delete a meeting and all its associated chunks and extracted items."""
+async def delete_meeting(
+    meeting_id: str,
+    user_id: Annotated[str, Depends(get_current_user_id)],
+) -> None:
+    """Delete a meeting owned by the authenticated user.
+
+    Returns 404 if the meeting does not exist or does not belong to the caller.
+    This prevents ownership-probing via DELETE. (#71)
+    """
     import uuid as _uuid
 
     try:
@@ -104,6 +133,19 @@ async def delete_meeting(meeting_id: str) -> None:
         raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found") from None
 
     client = get_supabase_client()
+
+    # Verify ownership before deleting dependent rows. Raise 404 whether the
+    # meeting is genuinely missing or belongs to a different user. (#71)
+    check = (
+        client.table("meetings")
+        .select("id")
+        .eq("id", meeting_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    if not cast(list[dict[str, Any]], check.data):
+        raise HTTPException(status_code=404, detail=f"Meeting {meeting_id} not found")
+
     # Delete dependent rows first (foreign key safety)
     client.table("chunks").delete().eq("meeting_id", meeting_id).execute()
     client.table("extracted_items").delete().eq("meeting_id", meeting_id).execute()

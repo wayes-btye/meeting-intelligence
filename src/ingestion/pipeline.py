@@ -19,6 +19,7 @@ def ingest_transcript(
     title: str,
     chunking_strategy: str | ChunkingStrategy = ChunkingStrategy.SPEAKER_TURN,
     extract: bool = False,
+    user_id: str | None = None,
 ) -> str:
     """Full ingestion pipeline: parse -> chunk -> embed -> store (-> extract).
 
@@ -28,6 +29,9 @@ def ingest_transcript(
         title: Human-readable meeting title.
         chunking_strategy: ``"naive"`` or ``"speaker_turn"`` (string or enum).
         extract: If True, run structured extraction after ingestion.
+        user_id: Authenticated user's UUID. Stored on the meeting row for
+            per-user isolation. If ``None``, the row is created without an
+            owner (legacy behaviour, will be filtered out after migration).
 
     Returns:
         The newly created meeting ID.
@@ -57,6 +61,7 @@ def ingest_transcript(
         content,
         transcript_format=format,
         num_speakers=num_speakers or None,
+        user_id=user_id,
     )
     store_chunks(client, meeting_id, chunks_with_embeddings)
 

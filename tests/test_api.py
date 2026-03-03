@@ -162,7 +162,9 @@ def test_zip_upload_ingests_multiple_meetings():
     fake_ids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa", "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb"]
     call_count = {"n": 0}
 
-    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+    def fake_ingest(
+        content: str, fmt: str, title: str, strategy: object, user_id: object = None
+    ) -> str:
         idx = call_count["n"]
         call_count["n"] += 1
         return fake_ids[idx]
@@ -199,7 +201,9 @@ def test_zip_upload_skips_non_transcript_files():
     fake_ids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
     call_count = {"n": 0}
 
-    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+    def fake_ingest(
+        content: str, fmt: str, title: str, strategy: object, user_id: object = None
+    ) -> str:
         idx = call_count["n"]
         call_count["n"] += 1
         return fake_ids[idx]
@@ -253,7 +257,9 @@ def test_zip_audio_no_key_adds_to_errors():
     fake_ids = ["aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa"]
     call_count = {"n": 0}
 
-    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+    def fake_ingest(
+        content: str, fmt: str, title: str, strategy: object, user_id: object = None
+    ) -> str:
         idx = call_count["n"]
         call_count["n"] += 1
         return fake_ids[idx]
@@ -287,7 +293,9 @@ def test_zip_audio_with_key_is_ingested():
     fake_ids = ["cccccccc-cccc-cccc-cccc-cccccccccccc"]
     call_count = {"n": 0}
 
-    def fake_ingest(content: str, fmt: str, title: str, strategy: object) -> str:
+    def fake_ingest(
+        content: str, fmt: str, title: str, strategy: object, user_id: object = None
+    ) -> str:
         idx = call_count["n"]
         call_count["n"] += 1
         return fake_ids[idx]

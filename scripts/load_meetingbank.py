@@ -102,6 +102,7 @@ def load_meetingbank(
     data_dir: str = "data/meetingbank",
     chunking_strategy: str = "speaker_turn",
     max_meetings: int | None = None,
+    user_id: str | None = None,
 ) -> None:
     """Load all MeetingBank meetings from data directory into Supabase."""
     data_path = Path(data_dir)
@@ -153,6 +154,7 @@ def load_meetingbank(
                 source_file=filepath.name,
                 transcript_format="meetingbank",
                 num_speakers=num_speakers if num_speakers > 0 else None,
+                user_id=user_id,  # meetings.user_id is NOT NULL (#71)
             )
             store_chunks(client, meeting_id, chunks_with_embeddings)
 
@@ -171,5 +173,6 @@ if __name__ == "__main__":
     parser.add_argument("--dir", default="data/meetingbank")
     parser.add_argument("--strategy", default="speaker_turn")
     parser.add_argument("--max", type=int, default=None)
+    parser.add_argument("--user-id", default=None, help="UUID of the Supabase auth user to own loaded meetings (required since #71 added NOT NULL user_id column)")
     args = parser.parse_args()
-    load_meetingbank(args.dir, args.strategy, args.max)
+    load_meetingbank(args.dir, args.strategy, args.max, args.user_id)

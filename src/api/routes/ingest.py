@@ -8,9 +8,10 @@ import json
 import zipfile
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from postgrest import CountMethod
 
+from src.api.auth import get_current_user_id
 from src.api.models import BatchIngestResponse, IngestResponse
 from src.config import settings
 from src.ingestion.pipeline import ingest_transcript
@@ -86,6 +87,7 @@ def _transcribe_audio(raw: bytes) -> str:
 
 @router.post("/api/ingest", response_model=IngestResponse | BatchIngestResponse)
 async def ingest(
+    user_id: Annotated[str, Depends(get_current_user_id)],
     file: Annotated[UploadFile, File(...)],
     title: Annotated[str, Form()] = "Untitled Meeting",
     chunking_strategy: Annotated[str, Form()] = "speaker_turn",
@@ -126,7 +128,7 @@ async def ingest(
 
     # --- Zip bulk upload path (Issue #34) ---
     if ext == "zip" or content_type in ("application/zip", "application/x-zip-compressed"):
-        return _ingest_zip(raw, filename, title, strategy)
+        return _ingest_zip(raw, filename, title, strategy, user_id)
 
     if ext in AUDIO_EXTENSIONS or content_type.startswith("audio/"):
         # Audio path: transcribe with AssemblyAI or return 501 if not configured
@@ -148,7 +150,7 @@ async def ingest(
         format_map = {"vtt": "vtt", "txt": "text", "json": "json"}
         transcript_format = format_map.get(ext, "text")
 
-    meeting_id = ingest_transcript(content, transcript_format, title, strategy)
+    meeting_id = ingest_transcript(content, transcript_format, title, strategy, user_id=user_id)
 
     # Get chunk count
     client = get_supabase_client()
@@ -172,6 +174,7 @@ def _ingest_zip(
     zip_filename: str,
     base_title: str,
     strategy: ChunkingStrategy,
+    user_id: str | None = None,
 ) -> BatchIngestResponse:
     """Ingest all transcript and audio files from a zip archive.
 
@@ -266,7 +269,9 @@ def _ingest_zip(
                     content = file_bytes.decode("utf-8")
                     transcript_format = format_map[member_ext]
 
-                meeting_id = ingest_transcript(content, transcript_format, meeting_title, strategy)
+                meeting_id = ingest_transcript(
+                    content, transcript_format, meeting_title, strategy, user_id=user_id
+                )
                 meeting_ids.append(meeting_id)
             except HTTPException as exc:
                 errors.append(f"{member_name}: {exc.detail}")

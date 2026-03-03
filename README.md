@@ -169,19 +169,21 @@ City council meetings work well: clear structure (motions, votes, named speakers
 |-----------|-----------|---------|----------|
 | `data/meetingbank/` | Yes | pytest, `scripts/load_meetingbank.py` | 30 MeetingBank city council meetings (JSON) — benchmark dataset |
 | `tests/fixtures/` | Yes | pytest (automated) | Small synthetic files: sample VTTs, one MeetingBank JSON fixture |
-| `tests/data/` | Transcripts only (MP3s gitignored) | `tests/transcribe_sample.py` (manual) | 5 real GitLab Unfiltered meeting recordings + their AssemblyAI transcripts |
+| `tests/data/` | 1 MP3 + all TXT/JSON transcripts | Manual/demo only | 5 real GitLab Unfiltered meetings — audio + AssemblyAI transcripts |
 
-**`tests/data/` audio files** (MP3s are local-only, not in git):
+**`tests/data/` — GitLab Unfiltered meeting recordings** (all from [GitLab Unfiltered](https://www.youtube.com/@GitLabUnfiltered)):
 
-| File | Duration | Source |
-|------|----------|--------|
-| `gitlab-engineering-meeting.mp3` | 24 min | [Engineering Key Review, Feb 2021](https://www.youtube.com/watch?v=qGFoZ8yodc4) |
-| `gitlab-product-marketing-weekly-2021-06-28.mp3` | 43 min | [Product Marketing Weekly, Jun 2021](https://www.youtube.com/watch?v=lBVtvOpU80Q) |
-| `gitlab-product-team-meeting-2019-07-09.mp3` | 43 min | [Product Team Meeting, Jul 2019](https://www.youtube.com/watch?v=k8K6wQLxooU) |
-| `gitlab-code-review-weekly-2022-09-30.mp3` | 34 min | [Code Review Weekly Workshop, Sep 2022](https://www.youtube.com/watch?v=1lzK6EYO800) |
-| `gitlab-sec-growth-datascience-2022-09-14.mp3` | 29 min | [Sec Growth DataScience Staff Meeting, Sep 2022](https://www.youtube.com/watch?v=rOqgRiNMVqg) |
+| File | MP3 in git? | Duration | Speakers | YouTube |
+|------|-------------|----------|----------|---------|
+| `gitlab-sec-growth-datascience-2022-09-14` | **Yes (28 MB)** | 29 min | 9 | [link](https://www.youtube.com/watch?v=rOqgRiNMVqg) |
+| `gitlab-engineering-meeting` | No | 24 min | 7 | [link](https://www.youtube.com/watch?v=qGFoZ8yodc4) |
+| `gitlab-product-marketing-weekly-2021-06-28` | No | 43 min | 7 | [link](https://www.youtube.com/watch?v=lBVtvOpU80Q) |
+| `gitlab-product-team-meeting-2019-07-09` | No | 43 min | 9 | [link](https://www.youtube.com/watch?v=k8K6wQLxooU) |
+| `gitlab-code-review-weekly-2022-09-30` | No | 34 min | 3 | [link](https://www.youtube.com/watch?v=1lzK6EYO800) |
 
-All audio sourced from the [GitLab Unfiltered](https://www.youtube.com/@GitLabUnfiltered) YouTube channel via Apify (`marielise.dev/youtube-video-downloader`). See `tests/data/README.md` for details.
+The `.txt` and `.json` AssemblyAI transcripts for all 5 meetings are committed. Each meeting can be tested via the transcript path (instant, no API key) or the audio path (requires `ASSEMBLYAI_API_KEY`).
+
+**Download all 5 MP3s:** [Google Drive zip](https://drive.google.com/file/d/1WaJ8GDtoX8HgHw6V1U-zkG0aoTrCP5MM/view?usp=sharing) — extract into `tests/data/`. See `tests/data/README.md` for full details.
 
 ---
 

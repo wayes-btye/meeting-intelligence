@@ -1,0 +1,465 @@
+{
+  "id": "6b445993-bb04-4925-ba26-8899347662a7",
+  "status": "TranscriptStatus.completed",
+  "audio_duration_s": 2021,
+  "num_speakers": 3,
+  "utterances": [
+    {
+      "speaker": "A",
+      "text": "I have pretty big latency, but—",
+      "start_ms": 80,
+      "end_ms": 1920
+    },
+    {
+      "speaker": "B",
+      "text": "Oh no, you're good. You seem to have low latency from this perspective.",
+      "start_ms": 2000,
+      "end_ms": 7440
+    },
+    {
+      "speaker": "A",
+      "text": "Cool.",
+      "start_ms": 8800,
+      "end_ms": 9280
+    },
+    {
+      "speaker": "B",
+      "text": "We'll see. If you start clipping out of your box or whatever, then I'll realize, okay, Dominik is either hacking or he has ping issues.",
+      "start_ms": 9360,
+      "end_ms": 19840
+    },
+    {
+      "speaker": "A",
+      "text": "I'm sorry.",
+      "start_ms": 20240,
+      "end_ms": 21040
+    },
+    {
+      "speaker": "B",
+      "text": "No, Dominik, you brought up a really great— When I asked the question about, from the security perspective, is there anything that people that are performing code reviews should be aware of? And you brought up dependencies. And that's a really— and you also mentioned that that's something we've talked about before. And yeah, that ends up being, recurringly, the kind of MRs that introduce new dependencies. Make people feel, feel different feelings, even like, even in comparison to MRs that introduced like 1,000 lines of code have changed. Like a new dependency is like, I don't even know how many lines of runtime code this is changing. Like, like there's so much known that, um, someone who cares about the product can be concerned about. So I'd love to, um, you dived into how some flags for what, and that's my big question to you would be, what is like a good litmus test for adding a new dependency of knowing is this pretty good? And is the like maturity of the project and the maturity of the release, like, is like, we as GitLab, do we tend to want to use the hottest release stuff or do we wait a bit of time to see if security stuff bubbles up from the releases and from the security perspective, what's the good litmus test for like adding new dependencies?",
+      "start_ms": 22400,
+      "end_ms": 113480
+    },
+    {
+      "speaker": "A",
+      "text": "Yeah, also hello Anna, someone, someone else joined us. Uh, yeah, we, we definitely want to use the latest version. Um, there is of course a stability and even a security risk, I guess, to being super cutting edge, but chances are that they're fixing security issues. And unfortunately, very few people are as open and transparent as we are with security issues, and they will silently patch everything. So that is a— because a new version does not mention a security fix does not mean there is no security fix.",
+      "start_ms": 115240,
+      "end_ms": 154610
+    },
+    {
+      "speaker": "B",
+      "text": "Oh wow.",
+      "start_ms": 154610,
+      "end_ms": 155250
+    },
+    {
+      "speaker": "A",
+      "text": "Unfortunately. So, so many, many companies don't Well, companies, yes, but even less so, like small, like benevolent dictators for life don't require, don't request CVs. They don't request CVs and especially not for lower severity issues. A lot of companies and groups only request CVs for super critical stuff. But what if that low severity issue is just used in a specific condition at GitLab that makes it super critical? So we want to have the latest versions. We're looking for activity in the dependency. We do have one dependency. It's one of our wiki rendering ones. It hasn't been updated in like 11 years, I think. I don't like that. I don't like that at all. And so we have some stuff like that. So you want some sort of activity. And once again, like those are open source projects and one day that person might decide I'm not maintaining this anymore. So it's ideally this would be a kind of ongoing process where like we have some sort of monitoring over that. And but right now the best we can do as a code reviewer is to look, is this being maintained now? So like any commits, any like if it's a gem, you go on RubyGems, like how, what does the release cycle look like?",
+      "start_ms": 155250,
+      "end_ms": 247070
+    },
+    {
+      "speaker": "B",
+      "text": "Oh yeah, that's interesting.",
+      "start_ms": 247230,
+      "end_ms": 249070
+    },
+    {
+      "speaker": "A",
+      "text": "And wow, I prefer from the security side, a gem that has like one purpose and does almost only that. Or sometimes like Rails and stuff like that, you have those frameworks out there, but if you like, you want an XML parser, Nakaguri, does that. It does other stuff, but it's like, it's pretty just a tool for that job. Sometimes you have gems that just do so many things, and it allows you to pivot in. Like, a hacker that finds a, a certain vulnerability could use a feature of that gem that we don't use, but it's there, and it's used to increase the severity of the vulnerability. It happened with another server-side rendering thing. I think it was for the wikis again, but some sort of CSS server-side parsing ended up an arbitrary file read. Like, why did this read files? So, so, so like the person is like, yeah, I'm just doing this CSS stylesheet, and here's your secrets, the.rb file.",
+      "start_ms": 249150,
+      "end_ms": 326000
+    },
+    {
+      "speaker": "B",
+      "text": "Yeah, that sounds like—",
+      "start_ms": 326480,
+      "end_ms": 327920
+    },
+    {
+      "speaker": "A",
+      "text": "So yeah, you wanna avoid that.",
+      "start_ms": 328080,
+      "end_ms": 329280
+    },
+    {
+      "speaker": "B",
+      "text": "That sounds like using just a subset of a dependency.",
+      "start_ms": 329680,
+      "end_ms": 333520
+    },
+    {
+      "speaker": "A",
+      "text": "Yeah.",
+      "start_ms": 335680,
+      "end_ms": 336040
+    },
+    {
+      "speaker": "B",
+      "text": "So, so there's using it, but also of something that goes wrong is like you're, you're still coupled to a lot of other pieces that couldn't— that's interesting. That's interesting.",
+      "start_ms": 336040,
+      "end_ms": 347120
+    },
+    {
+      "speaker": "C",
+      "text": "Yeah.",
+      "start_ms": 347120,
+      "end_ms": 347600
+    },
+    {
+      "speaker": "A",
+      "text": "And sometimes that's a choice, like that's not really a choice. Like we have this thing we want to do and there's basically only one well-known gem that does it. And we can't really do the feature from scratch ourselves. So it's like, eh, we have to do that.",
+      "start_ms": 349050,
+      "end_ms": 362490
+    },
+    {
+      "speaker": "B",
+      "text": "So I, I gotta ask you another question. Is there ever a situation where it makes more sense, say the library is small enough where it's basically left-pad? That's, that's the question is I'm asking is where is that line of Hey, this is open source. We should just, we should just create a function using the same code versus we should actually have a third-party dependency for this.",
+      "start_ms": 362890,
+      "end_ms": 387340
+    },
+    {
+      "speaker": "A",
+      "text": "Yeah. I wish I had a good metric.",
+      "start_ms": 388940,
+      "end_ms": 392700
+    },
+    {
+      "speaker": "B",
+      "text": "I know, but these are million-dollar questions.",
+      "start_ms": 392700,
+      "end_ms": 394300
+    },
+    {
+      "speaker": "A",
+      "text": "Right now I would say, right now I would say it's really just by feeling and yeah. Yeah. It's really when we. But gotta, from the reviewer perspective, especially like AppSec, we have like varying developer experience. I've been a developer for a long time, but not all of us have. And some, like, I think I have a decent feeling for how long something would take for us to implement. Sometimes we don't. So I think it's just a conversation to have. Like, yeah, I get that adding this dependency is literal 15 seconds., but here are the things like the maintenance we pick up in the long term. Like what happens if we don't update and there's a package, the person gives up maintaining this and just knowing all these facts, you as a developer adding this dependency, how do you feel about that? Like, is that a good trade-off?",
+      "start_ms": 394300,
+      "end_ms": 454770
+    },
+    {
+      "speaker": "B",
+      "text": "So if, if someone's reviewing something and they get that feeling of like, uh, this dependency doesn't have a lot of activity on it. It's not, doesn't seem like it has a lot of signs for like longevity support, but it has a function that we really need. Uh, how do you, what do you think is a way someone that's reviewing an MR, how they could, how they should respond to that feeling? Like. Reaching out to the MR author or reaching out to maintainers or reaching out to security of like what are—",
+      "start_ms": 454770,
+      "end_ms": 491680
+    },
+    {
+      "speaker": "A",
+      "text": "Oh, I think the discussion should happen in the MR, uh, just, just with the author. And I, I think every time I've needed to have this conversation, it just worked out in the MR pretty well. And sometimes, uh, if it's if it's just like a specific function inside a package that does way too much, we could, like, there are, depending on licensing and everything, we could extract that and maybe forking is the solution. I don't think we've had to, well, we did have to fork in the past, but maybe not for that reason. Like just fork and basically delete everything we don't need. That could be a way forward. So it has its drawbacks because if, like, we might miss updates to the upstream and everything, it's complicated. Yeah, and especially another sign, I guess, something that would push towards the re-implement ourselves, always going back to that left pad, like, left pad wasn't just something simple done as a package, it, it pulled a bunch of dependencies too. Like, why? So, so it was like you get that huge tree of dependencies. So, and you need to care for those as well. And nowadays it's not just, it's not just a vulnerability in your product. If one of those is compromised, it could compromise our pipelines. And we have a bunch of very sensitive API keys in those and stuff like that. So we have detection, like Package Hunter is supposed to detect that, but we've seen, we've seen like someone who is aware, someone who's targeting us could, could evade Package Hunter potentially, just detect it and, yeah, and fire in other environments that are not CI or something like that. We've seen the opposite actually. There was a Rust package that was malware that fired only in GitLab CI/CD. It was targeting someone using GitLab. So that's, you know, that's kind of stuff. That's like the Volkswagen cars that detected they were being tested and didn't emit as much CO2. It's the same sort of situation.",
+      "start_ms": 491680,
+      "end_ms": 638110
+    },
+    {
+      "speaker": "B",
+      "text": "I, I tried to find, um, I tried to find, uh, I came across this and like a little while ago, but back in the day, like graphics cards would run special optimizations based on the executable being called Quake.exe.",
+      "start_ms": 638110,
+      "end_ms": 656110
+    },
+    {
+      "speaker": "A",
+      "text": "They were in 3DS Mark or whatever, right?",
+      "start_ms": 656110,
+      "end_ms": 659670
+    },
+    {
+      "speaker": "B",
+      "text": "I guess. And I don't remember, I was trying to, I was trying to reference it earlier. I couldn't find Couldn't even find any reference. I guess it's being trying to, uh, I don't know why I couldn't find it, but yeah, that's, that's really interesting. Um, and yeah, that's a good point. Like left-pad is an extreme case. Uh, because it's so silly, like, but we've seen so many packages. Yeah.",
+      "start_ms": 659670,
+      "end_ms": 684760
+    },
+    {
+      "speaker": "C",
+      "text": "Yeah.",
+      "start_ms": 684760,
+      "end_ms": 685000
+    },
+    {
+      "speaker": "B",
+      "text": "And I think it's worth us being aware of just the cost of bringing in dependencies needs to continue to be a conversation in MRs. Uh, yeah, but I think like, to me, the cost of reimplementing sometimes is really, really low. Like, cuz if a third party, if a third party library has a lot of dependencies, has some yellow to red flags that we're concerned about, and we really just need this function, but it's MIT license, I'm kind of like, let's just copy and paste the code, especially if there's not really any sign that the code will change. If it is just padding spaces to the left of the string, that algorithm's probably not gonna change. Uh, yeah, I think that there's those, those situations where, especially if you just get, if you're getting closer to the like pure algorithm side, that's like, yes, this makes sense. Let's just own this and not deal with dependencies because then the fact that this thing will change is very unlikely. But yeah, there's a pro— there's a lot that's going on, so it's, it's a It's good to bring up the discussion at MRs. And I think, uh, that's the main takeaway that I hope most of our code people doing code review can feel empowered to do is just starting the discussion based on that feeling of like, uh, let's just start talking about it then and not just, not just stuff it and feel like, well, I guess, you know, I guess this was already talked about, so we're just going to keep going and Yeah, I hope that does get to happen.",
+      "start_ms": 685000,
+      "end_ms": 784010
+    },
+    {
+      "speaker": "C",
+      "text": "Got another $1 million question on this kind of closing up onto. So we've just been speaking about what kind of issues would justify a third-party library and what kind of issues we want to solve ourselves. Let's move ahead one more step and let's imagine for a second that we are working on a problem which absolutely requires a third-party library because it's just too complex or whatever it might be. But what I found myself in, to be quite open, is I'll be searching for somebody to solve the problem for me, and I'll be finding 18 different libraries. What kind of red or yellow flags are we speaking about that actually might help us finding a good one? Because as far as I know, there's not a lot of standard. There's also kind of gut feeling, like, um, yes, years it exists, activity, these kind of things, like, but these are all super vague in a way.",
+      "start_ms": 784010,
+      "end_ms": 842540
+    },
+    {
+      "speaker": "A",
+      "text": "Yep. I added a link in the agenda just now. We're trying— there's a project, it's been going on for a while. This is not ready yet, but there's an MR dependency review bot project that's going on that would, when you add something, that kind of fetches the metadata and builds a trust score about each vulnerability, each dependency. There's also, if you want something a little more formal, I have to find the link. Give me one second.",
+      "start_ms": 843660,
+      "end_ms": 880730
+    },
+    {
+      "speaker": "B",
+      "text": "This is beautiful. Wow. A trust score with the quantifying criticality algorithm could be used here.",
+      "start_ms": 880730,
+      "end_ms": 888210
+    },
+    {
+      "speaker": "A",
+      "text": "This is really cool. OpenSSL.",
+      "start_ms": 888210,
+      "end_ms": 893140
+    },
+    {
+      "speaker": "B",
+      "text": "Um, OpenSSL, uh, yeah, sorry.",
+      "start_ms": 893780,
+      "end_ms": 902380
+    },
+    {
+      "speaker": "A",
+      "text": "No, I'm sorry.",
+      "start_ms": 902380,
+      "end_ms": 902980
+    },
+    {
+      "speaker": "B",
+      "text": "I was going to say we've been talking about security issues without maybe talking about specific security issues. Maybe the rest of this, maybe this is just a private recording in general. I think we did mention, hey, if people were wanting to attack us, think of skirting around patents?",
+      "start_ms": 902980,
+      "end_ms": 922980
+    },
+    {
+      "speaker": "A",
+      "text": "Or do you think that this— Yeah, I don't think that was anything new to anyone who's trying to attack us.",
+      "start_ms": 922980,
+      "end_ms": 930540
+    },
+    {
+      "speaker": "B",
+      "text": "I'm debating in the back of my head. I have a confidential issue that I would— it's somewhat relevant and interesting to share. I would love to get your all thoughts on it. Um, so I might just pause the recording then on that, on that case. But is there something that you want to bring up? I was, I was wanting to share my screen on this dependency review bot, but I, I won't share it right now. Is there something that— yeah, you wanted to highlight?",
+      "start_ms": 930860,
+      "end_ms": 957730
+    },
+    {
+      "speaker": "A",
+      "text": "Uh, OpenSSF, which is, uh, Open Source Software Foundation, I think, uh, they have another— and I'm pretty sure the bot actually, the bot I mentioned was leverages that, but they have this scorecard project and a bunch of criteria is basically to look at the health of the project. And they have like all the things that we kind of, that are gut feelings. They have this list and you kind of go through the entire thing and projects that check all the boxes will be extremely rare, but just everything they check just adds to your confidence. So the list looks like, yeah, do they like basically their CI and just review everything, best practices? Do they even do code review? Like look at their PRs and it's just, is it just one person commit and merge and is there any review going on? Do they have contributors? What's their CI workflow? Do they do fuzzing? What's the license, et cetera, et cetera, et cetera.",
+      "start_ms": 957730,
+      "end_ms": 1031270
+    },
+    {
+      "speaker": "B",
+      "text": "This is so cool. Yeah, this is like really, really cool. I wonder how we would score. I think we would score well.",
+      "start_ms": 1031270,
+      "end_ms": 1044750
+    },
+    {
+      "speaker": "A",
+      "text": "Also, there's something, it's kind of a, yeah, we probably would, to be honest, because we have a lot of extremely good practices. And one thing that many people, the first, one thing that people tend to think is a red flag, but could be a green one is existing vulnerabilities that were patched vulnerabilities. But when you go in the repository and like, let's say on GitHub, they have the security tab and you have the advisories. If they see that they never had any security advisory, they're like, hey, hey, this is safe. Actually, no, this is just, they don't disclose security issues. So if there's a list of some issues, this is not a red flag for me. This is, oh, cool. They are transparent about their security issues and you can actually see how the security issue was handled. How did they, like, how was it reported to them? Do they even have a process to report security issues? I don't mean a bug bounty program. I don't expect that of a random open source dependency., but I want a process to reach out to that person. And so having disclosed security issues for me is a huge green flag actually. Yeah. And one of the biggest, like if you the list of CVEs every year, one of the companies that has the largest amount of CVEs is GitLab. So, you know, it's just because we're very transparent and we request CVE even for the smallest, tiniest, silly security issue. That we believe that every single security issue should be, should have an advisory, and then our users can decide themselves if it justifies an upgrade or not instead of hiding them.",
+      "start_ms": 1044750,
+      "end_ms": 1151110
+    },
+    {
+      "speaker": "B",
+      "text": "That's awesome. Can I ask you a naive question about the CVEs? Yeah, sure. Do we request a CVE when one of our dependencies, like, does, do we inherit all the amount of CVs?",
+      "start_ms": 1152230,
+      "end_ms": 1168500
+    },
+    {
+      "speaker": "A",
+      "text": "Do we have to? We request another CV if the vulnerability in the package was exploitable in GitLab.",
+      "start_ms": 1168500,
+      "end_ms": 1178700
+    },
+    {
+      "speaker": "B",
+      "text": "Got it. Yep, that makes sense.",
+      "start_ms": 1178700,
+      "end_ms": 1180419
+    },
+    {
+      "speaker": "A",
+      "text": "Okay.",
+      "start_ms": 1180419,
+      "end_ms": 1180780
+    },
+    {
+      "speaker": "B",
+      "text": "That's usually our process.",
+      "start_ms": 1180780,
+      "end_ms": 1182500
+    },
+    {
+      "speaker": "A",
+      "text": "Got it. Like if there was an issue with reading files in Rails and we had to upgrade Rails and release a new GitLab version, because of that, we would issue a CVE on top of it.",
+      "start_ms": 1182500,
+      "end_ms": 1196920
+    },
+    {
+      "speaker": "B",
+      "text": "Got it, got it.",
+      "start_ms": 1197000,
+      "end_ms": 1200227
+    },
+    {
+      "speaker": "C",
+      "text": "Okay, um, heading on that note, so today I learned that, um, adding a CVE number for a security issue is completely optional and nothing more than an agreement.",
+      "start_ms": 1200227,
+      "end_ms": 1212600
+    },
+    {
+      "speaker": "A",
+      "text": "Like, oh, it's more than optional. It depends on if basically it's the, uh, the owner of the project that requests the CVE. So it's all in good faith. Yeah. And then if the owner of the— so there are some politics involved. So first, the owner of the code should request the CVE. If they don't, the finder of the security issue could reach out to the MITRE, which is the organization's. But if the owner of the code is what we call a CNA, a CVE numbering authority, Like GitLab emits CVE numbers. We are a CNA because we can, like, open source projects hosted on GitLab can request CVE numbers and we kind of create that for them. You cannot request a CVE for a project owned by a CNA. So let's pick a CNA at random. GitHub. If you find a security issue in GitHub and they fix it but don't announce it, you, like, if you request it for them, it will be denied because they are a CNA.",
+      "start_ms": 1212600,
+      "end_ms": 1289480
+    },
+    {
+      "speaker": "C",
+      "text": "And the same would be true for us, correct?",
+      "start_ms": 1289480,
+      "end_ms": 1292120
+    },
+    {
+      "speaker": "A",
+      "text": "For GitLab, yeah, yeah. If we decided like, no, this security issue remains secret, we have that policy.",
+      "start_ms": 1292120,
+      "end_ms": 1301760
+    },
+    {
+      "speaker": "C",
+      "text": "Okay, but the If we're taking the authorization parts aside, if I do have a library with a massive security loophole and you find it, I as the author cannot stop you from reporting it. So sooner or later, it'll probably go out, at least.",
+      "start_ms": 1301760,
+      "end_ms": 1318979
+    },
+    {
+      "speaker": "A",
+      "text": "However, you need a reporter who cares enough to do that. Fair point, yeah. And I'll be very transparent. It was a fairly minor issue, but I have reported a security issue. It was a denial of service in the HTTP in the gem for HTTP requests called X-Con, which is fairly popular. And they fixed it and the process was fine, but they didn't request a CVE. So nobody who runs dependency scan knows that they need to upgrade and they don't know that their website could go down with a single request. But I was like, requesting a CVE is kind of a pain in the butt. So I was like, this is your job, man. I did my part. Fair point. So yeah, if it was like RC or whatever, I would have pushed a little more, but so yeah, this is all standing on the shoulders of goodwill people.",
+      "start_ms": 1318979,
+      "end_ms": 1374390
+    },
+    {
+      "speaker": "C",
+      "text": "This conversation will not make me sleep any better, but thanks for the insights.",
+      "start_ms": 1374950,
+      "end_ms": 1378990
+    },
+    {
+      "speaker": "A",
+      "text": "Nobody sleeps on the security team.",
+      "start_ms": 1378990,
+      "end_ms": 1382550
+    },
+    {
+      "speaker": "B",
+      "text": "Well, maybe, I don't know, maybe this says something positive about the human spirit We've made it this far.",
+      "start_ms": 1383030,
+      "end_ms": 1394510
+    },
+    {
+      "speaker": "A",
+      "text": "Oh, oh yeah. I mean, it just, it keeps in the, that's like open source software in general. Nobody has to do that. Yeah. And yet we are all here.",
+      "start_ms": 1394510,
+      "end_ms": 1405490
+    },
+    {
+      "speaker": "B",
+      "text": "I do appreciate like GitLab really does lead the charge in this. They're one of the most hacker ethic, share everything as much as possible.",
+      "start_ms": 1405490,
+      "end_ms": 1415610
+    },
+    {
+      "speaker": "A",
+      "text": "Uh, yeah. Yeah.",
+      "start_ms": 1415610,
+      "end_ms": 1416450
+    },
+    {
+      "speaker": "B",
+      "text": "It's amazing. It's really cool. And I hope it inspires more organizations and maintainers to do the same because, yeah, there's a lot of— that's a lot of positivity that can be done. And there's a lot of people that do want to do the right thing. And that's a good thing. I'd love to share— talk about dependencies. I'd love to share this issue that we've been wrestling with, which is kind of related to code review but kind of not, but is very related to the discussion about dependencies we were just talking about. But this is a confidential issue, so I'm going to pause the recording. Is everyone OK with that? OK, I'm pausing the— so I'm going to resume the recording, and I'm going to just share our— one of the conclusions was I was asking about a library that we struggle with that has commonly recurring issues, and, uh, if there's something we're using that we don't totally trust and/or that has proven to be a little flaky from a security perspective, um, from the front end, you could actually use— there's some means of being able to just put this in a little sandbox, uh, specifically with this sandbox attribute. On an iframe. And, um, I like that idea of we're able to use dependencies, but we're taking extra precautions. We're future-proofing ourselves because we, we don't want to, um, we realize that there's inherent risk with, um, the way this dependency does things. And as you said, anything that renders, runs user input is a, is a pretty big red flag of we probably wanna sandbox this thing.",
+      "start_ms": 1416450,
+      "end_ms": 1525910
+    },
+    {
+      "speaker": "A",
+      "text": "I think I'll share, I'll add this in the slides as well, but you know, even sanitizers, like we say, oh, we run a sanitizer, but even that bugs happen. I saw a talk someone gave recently. He was fuzzing sanitizers. He basically took a very, very large list of weird HTML input, usually like lists of XSS payloads or whatever. He had thousands of those. And then he modified a fuzzer like AFL to run on, like, DOM Purify and libraries like that, but not just JavaScript, a bunch of languages. There was one for Java, and I believe he did it for HTML Server Sanitizer in Ruby as well. And he just, I think he had a computer running those things, and he just let it go for a week and a half or something, and then he gets a notification, and then, oh, this thing is not sanitized and he has like the most massive HTML payload and then he works it and figures out what's the minimal thing and the sanitizer reads, parses the HTML and thinks, I don't know, this is a list with an embedded comment or whatever, but the browser parses that and actually does not parse in the same order and sees a script tag instead. And So that was supposed to be text, but it is actually parsed as a tag. So, so that sort of stuff can happen. And so even sanitizers, I mean, at some point you have to kind of trust someone, but if we can even the sandbox at this point, if you want to bypass that, you need like a bug in the browser that way those do exist, but we're really making it so much more difficult. And also when there's a bug in the HTML sanitizer, we have to update a library and ship a new release. When there's a bug in the browser, which is one, very rare, and two, the browser's updated, everyone's browser updates automatically and we don't have to ship a new release.",
+      "start_ms": 1525910,
+      "end_ms": 1655410
+    },
+    {
+      "speaker": "B",
+      "text": "So there, there's that aspect as well.",
+      "start_ms": 1655410,
+      "end_ms": 1658290
+    },
+    {
+      "speaker": "C",
+      "text": "Wow.",
+      "start_ms": 1658290,
+      "end_ms": 1658300
+    },
+    {
+      "speaker": "B",
+      "text": "That's, that's fascinating. That's That's, I know that happens and it always, it always scares me when I realize the arms race that security is. And then when you have the robots pointing at each other and just going on to infinitum of, that's not a word.",
+      "start_ms": 1658300,
+      "end_ms": 1678070
+    },
+    {
+      "speaker": "A",
+      "text": "Oh yeah. Fuzzing. Fuzzing is, uh, that's limitless.",
+      "start_ms": 1678070,
+      "end_ms": 1683790
+    },
+    {
+      "speaker": "B",
+      "text": "Yeah. That's absolutely wild. I, I do like the idea. And I think generally as a culture, bringing this back to code review of Being defensive sounds like a really necessary security tactic of like, just knowing even this, this works today, but we just also don't know like issues it may have in the future or now. So the, whatever steps we can take to limit the blast radius, but when things go wrong is a really good culture we need to.",
+      "start_ms": 1683870,
+      "end_ms": 1719000
+    },
+    {
+      "speaker": "A",
+      "text": "Promoting and asking us questions. Assume there will be a vulnerability. Yeah. And how do we prepare for that?",
+      "start_ms": 1719000,
+      "end_ms": 1727040
+    },
+    {
+      "speaker": "B",
+      "text": "Yeah, that's cool. Um, thanks, thanks for letting me, uh, poke at you so much and getting you to spill your security guts knowledge at the table. Um, yeah. Is there anything else that we wanted to, to, to dive into here?",
+      "start_ms": 1727040,
+      "end_ms": 1749930
+    },
+    {
+      "speaker": "A",
+      "text": "I guess there's a server-side equivalent to those sandbox mechanisms. It's so much more complicated, but like when there's something we don't trust, and that's something we're trying to look into for— we thought about that when we ran exiftool on our images that are uploaded and stuff like that.",
+      "start_ms": 1749930,
+      "end_ms": 1776450
+    },
+    {
+      "speaker": "C",
+      "text": "You can—",
+      "start_ms": 1777730,
+      "end_ms": 1778250
+    },
+    {
+      "speaker": "A",
+      "text": "these are words I never pronounce and only read, but you know, the change root tool, chroot. You can kind of change— you could execute— you move— you copy the executable in a place and you create a user that has only access to, I don't know, it's like some sort of directory inside your, your temp files or whatever. So if there's ever an exploit in that and they get file and command execution on the system, they are running as a user that has access to nothing. Sort of like something in a container, like our runners. Like, you have command execution by design on our runners, and this is not a security issue. So because of the way it's designed. So some of our actions, once again, where we process user input, when we process uploads, when we process project imports, where we had a lot of security issues, if those could happen inside an environment that we don't care if it's compromised, basically, that's really, and this makes the architecture a lot harder, especially with our monolith. This is where kind of microservices or whatever you want to call them shine, I guess. It's easy to just put that workflow inside of another machine and there we go. Like we don't compromise our host. But yeah, this is, this is the iframe sandbox of the service.",
+      "start_ms": 1778250,
+      "end_ms": 1872360
+    },
+    {
+      "speaker": "B",
+      "text": "Right. That's interesting. Yeah, it makes sense from a microservices perspective, and I can see that being really challenging from the monolithic perspective. Of having to do like user organization of, uh, but that's interesting. Um, and that makes sense though. Uh, my, the microservice approach sounds easy, sounds way easier than spinning up processes for some reason. Like even though there's probably a lot more going on, it sounds easier than spinning off processes. Yeah, yeah, that's funny. Um, cool. Well, for the last bit, uh, we usually pair up on an MR review, but we only have like 10 minutes left. Does anyone have like a really small MR that, or something of that nature that they'd wanna want to present to the offering of the, the code review gods? I'm gonna take that as a maybe next time. Cool. Well, this was such a fascinating discussion.",
+      "start_ms": 1872360,
+      "end_ms": 1948120
+    },
+    {
+      "speaker": "A",
+      "text": "I added a link to a, a presentation in the, the agenda. Awesome. Great. Highly recommend watching it. It, yeah, it will open your eyes if you're not familiar with that. Cool.",
+      "start_ms": 1948120,
+      "end_ms": 1958720
+    },
+    {
+      "speaker": "B",
+      "text": "Yeah. So this is, uh, I'll add this link also to the, um, the recording description, but this is such a fascinating discussion. I think security is such a great, important— these quality attributes are hopefully the things we're talking about in code review, at least in a collaborative way of like how we're going to maintain this in the long run. What's the performance of this going to be like in the long run? And security is a big one as well that I think for all code reviewers, hopefully a big takeaway isn't just that we hyperfocus on the functional. Bit of what we're looking at, but we have to look at all the quality attributes here. And security is a, security and performance tend to be at odds with all sorts of other quality attributes. Cool. Well, thanks. Appreciate, appreciate you hopping on and contributing so much to the conversation, Dominique, and everybody else. I will bid you all adieu and have a great rest of the day.",
+      "start_ms": 1958720,
+      "end_ms": 2019130
+    },
+    {
+      "speaker": "A",
+      "text": "Adios.",
+      "start_ms": 2019130,
+      "end_ms": 2019140
+    }
+  ],
+  "text": "I have pretty big latency, but— Oh no, you're good. You seem to have low latency from this perspective. Cool. We'll see. If you start clipping out of your box or whatever, then I'll realize, okay, Dominik is either hacking or he has ping issues. I'm sorry. No, Dominik, you brought up a really great— When I asked the question about, from the security perspective, is there anything that people that are performing code reviews should be aware of? And you brought up dependencies. And that's a really— and you also mentioned that that's something we've talked about before. And yeah, that ends up being, recurringly, the kind of MRs that introduce new dependencies. Make people feel, feel different feelings, even like, even in comparison to MRs that introduced like 1,000 lines of code have changed. Like a new dependency is like, I don't even know how many lines of runtime code this is changing. Like, like there's so much known that, um, someone who cares about the product can be concerned about. So I'd love to, um, you dived into how some flags for what, and that's my big question to you would be, what is like a good litmus test for adding a new dependency of knowing is this pretty good? And is the like maturity of the project and the maturity of the release, like, is like, we as GitLab, do we tend to want to use the hottest release stuff or do we wait a bit of time to see if security stuff bubbles up from the releases and from the security perspective, what's the good litmus test for like adding new dependencies? Yeah, also hello Anna, someone, someone else joined us. Uh, yeah, we, we definitely want to use the latest version. Um, there is of course a stability and even a security risk, I guess, to being super cutting edge, but chances are that they're fixing security issues. And unfortunately, very few people are as open and transparent as we are with security issues, and they will silently patch everything. So that is a— because a new version does not mention a security fix does not mean there is no security fix. Oh wow. Unfortunately. So, so many, many companies don't Well, companies, yes, but even less so, like small, like benevolent dictators for life don't require, don't request CVs. They don't request CVs and especially not for lower severity issues. A lot of companies and groups only request CVs for super critical stuff. But what if that low severity issue is just used in a specific condition at GitLab that makes it super critical? So we want to have the latest versions. We're looking for activity in the dependency. We do have one dependency. It's one of our wiki rendering ones. It hasn't been updated in like 11 years, I think. I don't like that. I don't like that at all. And so we have some stuff like that. So you want some sort of activity. And once again, like those are open source projects and one day that person might decide I'm not maintaining this anymore. So it's ideally this would be a kind of ongoing process where like we have some sort of monitoring over that. And but right now the best we can do as a code reviewer is to look, is this being maintained now? So like any commits, any like if it's a gem, you go on RubyGems, like how, what does the release cycle look like? Oh yeah, that's interesting. And wow, I prefer from the security side, a gem that has like one purpose and does almost only that. Or sometimes like Rails and stuff like that, you have those frameworks out there, but if you like, you want an XML parser, Nakaguri, does that. It does other stuff, but it's like, it's pretty just a tool for that job. Sometimes you have gems that just do so many things, and it allows you to pivot in. Like, a hacker that finds a, a certain vulnerability could use a feature of that gem that we don't use, but it's there, and it's used to increase the severity of the vulnerability. It happened with another server-side rendering thing. I think it was for the wikis again, but some sort of CSS server-side parsing ended up an arbitrary file read. Like, why did this read files? So, so, so like the person is like, yeah, I'm just doing this CSS stylesheet, and here's your secrets, the.rb file. Yeah, that sounds like— So yeah, you wanna avoid that. That sounds like using just a subset of a dependency. Yeah. So, so there's using it, but also of something that goes wrong is like you're, you're still coupled to a lot of other pieces that couldn't— that's interesting. That's interesting. Yeah. And sometimes that's a choice, like that's not really a choice. Like we have this thing we want to do and there's basically only one well-known gem that does it. And we can't really do the feature from scratch ourselves. So it's like, eh, we have to do that. So I, I gotta ask you another question. Is there ever a situation where it makes more sense, say the library is small enough where it's basically left-pad? That's, that's the question is I'm asking is where is that line of Hey, this is open source. We should just, we should just create a function using the same code versus we should actually have a third-party dependency for this. Yeah. I wish I had a good metric. I know, but these are million-dollar questions. Right now I would say, right now I would say it's really just by feeling and yeah. Yeah. It's really when we. But gotta, from the reviewer perspective, especially like AppSec, we have like varying developer experience. I've been a developer for a long time, but not all of us have. And some, like, I think I have a decent feeling for how long something would take for us to implement. Sometimes we don't. So I think it's just a conversation to have. Like, yeah, I get that adding this dependency is literal 15 seconds., but here are the things like the maintenance we pick up in the long term. Like what happens if we don't update and there's a package, the person gives up maintaining this and just knowing all these facts, you as a developer adding this dependency, how do you feel about that? Like, is that a good trade-off? So if, if someone's reviewing something and they get that feeling of like, uh, this dependency doesn't have a lot of activity on it. It's not, doesn't seem like it has a lot of signs for like longevity support, but it has a function that we really need. Uh, how do you, what do you think is a way someone that's reviewing an MR, how they could, how they should respond to that feeling? Like. Reaching out to the MR author or reaching out to maintainers or reaching out to security of like what are— Oh, I think the discussion should happen in the MR, uh, just, just with the author. And I, I think every time I've needed to have this conversation, it just worked out in the MR pretty well. And sometimes, uh, if it's if it's just like a specific function inside a package that does way too much, we could, like, there are, depending on licensing and everything, we could extract that and maybe forking is the solution. I don't think we've had to, well, we did have to fork in the past, but maybe not for that reason. Like just fork and basically delete everything we don't need. That could be a way forward. So it has its drawbacks because if, like, we might miss updates to the upstream and everything, it's complicated. Yeah, and especially another sign, I guess, something that would push towards the re-implement ourselves, always going back to that left pad, like, left pad wasn't just something simple done as a package, it, it pulled a bunch of dependencies too. Like, why? So, so it was like you get that huge tree of dependencies. So, and you need to care for those as well. And nowadays it's not just, it's not just a vulnerability in your product. If one of those is compromised, it could compromise our pipelines. And we have a bunch of very sensitive API keys in those and stuff like that. So we have detection, like Package Hunter is supposed to detect that, but we've seen, we've seen like someone who is aware, someone who's targeting us could, could evade Package Hunter potentially, just detect it and, yeah, and fire in other environments that are not CI or something like that. We've seen the opposite actually. There was a Rust package that was malware that fired only in GitLab CI/CD. It was targeting someone using GitLab. So that's, you know, that's kind of stuff. That's like the Volkswagen cars that detected they were being tested and didn't emit as much CO2. It's the same sort of situation. I, I tried to find, um, I tried to find, uh, I came across this and like a little while ago, but back in the day, like graphics cards would run special optimizations based on the executable being called Quake.exe. They were in 3DS Mark or whatever, right? I guess. And I don't remember, I was trying to, I was trying to reference it earlier. I couldn't find Couldn't even find any reference. I guess it's being trying to, uh, I don't know why I couldn't find it, but yeah, that's, that's really interesting. Um, and yeah, that's a good point. Like left-pad is an extreme case. Uh, because it's so silly, like, but we've seen so many packages. Yeah. Yeah. And I think it's worth us being aware of just the cost of bringing in dependencies needs to continue to be a conversation in MRs. Uh, yeah, but I think like, to me, the cost of reimplementing sometimes is really, really low. Like, cuz if a third party, if a third party library has a lot of dependencies, has some yellow to red flags that we're concerned about, and we really just need this function, but it's MIT license, I'm kind of like, let's just copy and paste the code, especially if there's not really any sign that the code will change. If it is just padding spaces to the left of the string, that algorithm's probably not gonna change. Uh, yeah, I think that there's those, those situations where, especially if you just get, if you're getting closer to the like pure algorithm side, that's like, yes, this makes sense. Let's just own this and not deal with dependencies because then the fact that this thing will change is very unlikely. But yeah, there's a pro— there's a lot that's going on, so it's, it's a It's good to bring up the discussion at MRs. And I think, uh, that's the main takeaway that I hope most of our code people doing code review can feel empowered to do is just starting the discussion based on that feeling of like, uh, let's just start talking about it then and not just, not just stuff it and feel like, well, I guess, you know, I guess this was already talked about, so we're just going to keep going and Yeah, I hope that does get to happen. Got another $1 million question on this kind of closing up onto. So we've just been speaking about what kind of issues would justify a third-party library and what kind of issues we want to solve ourselves. Let's move ahead one more step and let's imagine for a second that we are working on a problem which absolutely requires a third-party library because it's just too complex or whatever it might be. But what I found myself in, to be quite open, is I'll be searching for somebody to solve the problem for me, and I'll be finding 18 different libraries. What kind of red or yellow flags are we speaking about that actually might help us finding a good one? Because as far as I know, there's not a lot of standard. There's also kind of gut feeling, like, um, yes, years it exists, activity, these kind of things, like, but these are all super vague in a way. Yep. I added a link in the agenda just now. We're trying— there's a project, it's been going on for a while. This is not ready yet, but there's an MR dependency review bot project that's going on that would, when you add something, that kind of fetches the metadata and builds a trust score about each vulnerability, each dependency. There's also, if you want something a little more formal, I have to find the link. Give me one second. This is beautiful. Wow. A trust score with the quantifying criticality algorithm could be used here. This is really cool. OpenSSL. Um, OpenSSL, uh, yeah, sorry. No, I'm sorry. I was going to say we've been talking about security issues without maybe talking about specific security issues. Maybe the rest of this, maybe this is just a private recording in general. I think we did mention, hey, if people were wanting to attack us, think of skirting around patents? Or do you think that this— Yeah, I don't think that was anything new to anyone who's trying to attack us. I'm debating in the back of my head. I have a confidential issue that I would— it's somewhat relevant and interesting to share. I would love to get your all thoughts on it. Um, so I might just pause the recording then on that, on that case. But is there something that you want to bring up? I was, I was wanting to share my screen on this dependency review bot, but I, I won't share it right now. Is there something that— yeah, you wanted to highlight? Uh, OpenSSF, which is, uh, Open Source Software Foundation, I think, uh, they have another— and I'm pretty sure the bot actually, the bot I mentioned was leverages that, but they have this scorecard project and a bunch of criteria is basically to look at the health of the project. And they have like all the things that we kind of, that are gut feelings. They have this list and you kind of go through the entire thing and projects that check all the boxes will be extremely rare, but just everything they check just adds to your confidence. So the list looks like, yeah, do they like basically their CI and just review everything, best practices? Do they even do code review? Like look at their PRs and it's just, is it just one person commit and merge and is there any review going on? Do they have contributors? What's their CI workflow? Do they do fuzzing? What's the license, et cetera, et cetera, et cetera. This is so cool. Yeah, this is like really, really cool. I wonder how we would score. I think we would score well. Also, there's something, it's kind of a, yeah, we probably would, to be honest, because we have a lot of extremely good practices. And one thing that many people, the first, one thing that people tend to think is a red flag, but could be a green one is existing vulnerabilities that were patched vulnerabilities. But when you go in the repository and like, let's say on GitHub, they have the security tab and you have the advisories. If they see that they never had any security advisory, they're like, hey, hey, this is safe. Actually, no, this is just, they don't disclose security issues. So if there's a list of some issues, this is not a red flag for me. This is, oh, cool. They are transparent about their security issues and you can actually see how the security issue was handled. How did they, like, how was it reported to them? Do they even have a process to report security issues? I don't mean a bug bounty program. I don't expect that of a random open source dependency., but I want a process to reach out to that person. And so having disclosed security issues for me is a huge green flag actually. Yeah. And one of the biggest, like if you the list of CVEs every year, one of the companies that has the largest amount of CVEs is GitLab. So, you know, it's just because we're very transparent and we request CVE even for the smallest, tiniest, silly security issue. That we believe that every single security issue should be, should have an advisory, and then our users can decide themselves if it justifies an upgrade or not instead of hiding them. That's awesome. Can I ask you a naive question about the CVEs? Yeah, sure. Do we request a CVE when one of our dependencies, like, does, do we inherit all the amount of CVs? Do we have to? We request another CV if the vulnerability in the package was exploitable in GitLab. Got it. Yep, that makes sense. Okay. That's usually our process. Got it. Like if there was an issue with reading files in Rails and we had to upgrade Rails and release a new GitLab version, because of that, we would issue a CVE on top of it. Got it, got it. Okay, um, heading on that note, so today I learned that, um, adding a CVE number for a security issue is completely optional and nothing more than an agreement. Like, oh, it's more than optional. It depends on if basically it's the, uh, the owner of the project that requests the CVE. So it's all in good faith. Yeah. And then if the owner of the— so there are some politics involved. So first, the owner of the code should request the CVE. If they don't, the finder of the security issue could reach out to the MITRE, which is the organization's. But if the owner of the code is what we call a CNA, a CVE numbering authority, Like GitLab emits CVE numbers. We are a CNA because we can, like, open source projects hosted on GitLab can request CVE numbers and we kind of create that for them. You cannot request a CVE for a project owned by a CNA. So let's pick a CNA at random. GitHub. If you find a security issue in GitHub and they fix it but don't announce it, you, like, if you request it for them, it will be denied because they are a CNA. And the same would be true for us, correct? For GitLab, yeah, yeah. If we decided like, no, this security issue remains secret, we have that policy. Okay, but the If we're taking the authorization parts aside, if I do have a library with a massive security loophole and you find it, I as the author cannot stop you from reporting it. So sooner or later, it'll probably go out, at least. However, you need a reporter who cares enough to do that. Fair point, yeah. And I'll be very transparent. It was a fairly minor issue, but I have reported a security issue. It was a denial of service in the HTTP in the gem for HTTP requests called X-Con, which is fairly popular. And they fixed it and the process was fine, but they didn't request a CVE. So nobody who runs dependency scan knows that they need to upgrade and they don't know that their website could go down with a single request. But I was like, requesting a CVE is kind of a pain in the butt. So I was like, this is your job, man. I did my part. Fair point. So yeah, if it was like RC or whatever, I would have pushed a little more, but so yeah, this is all standing on the shoulders of goodwill people. This conversation will not make me sleep any better, but thanks for the insights. Nobody sleeps on the security team. Well, maybe, I don't know, maybe this says something positive about the human spirit We've made it this far. Oh, oh yeah. I mean, it just, it keeps in the, that's like open source software in general. Nobody has to do that. Yeah. And yet we are all here. I do appreciate like GitLab really does lead the charge in this. They're one of the most hacker ethic, share everything as much as possible. Uh, yeah. Yeah. It's amazing. It's really cool. And I hope it inspires more organizations and maintainers to do the same because, yeah, there's a lot of— that's a lot of positivity that can be done. And there's a lot of people that do want to do the right thing. And that's a good thing. I'd love to share— talk about dependencies. I'd love to share this issue that we've been wrestling with, which is kind of related to code review but kind of not, but is very related to the discussion about dependencies we were just talking about. But this is a confidential issue, so I'm going to pause the recording. Is everyone OK with that? OK, I'm pausing the— so I'm going to resume the recording, and I'm going to just share our— one of the conclusions was I was asking about a library that we struggle with that has commonly recurring issues, and, uh, if there's something we're using that we don't totally trust and/or that has proven to be a little flaky from a security perspective, um, from the front end, you could actually use— there's some means of being able to just put this in a little sandbox, uh, specifically with this sandbox attribute. On an iframe. And, um, I like that idea of we're able to use dependencies, but we're taking extra precautions. We're future-proofing ourselves because we, we don't want to, um, we realize that there's inherent risk with, um, the way this dependency does things. And as you said, anything that renders, runs user input is a, is a pretty big red flag of we probably wanna sandbox this thing. I think I'll share, I'll add this in the slides as well, but you know, even sanitizers, like we say, oh, we run a sanitizer, but even that bugs happen. I saw a talk someone gave recently. He was fuzzing sanitizers. He basically took a very, very large list of weird HTML input, usually like lists of XSS payloads or whatever. He had thousands of those. And then he modified a fuzzer like AFL to run on, like, DOM Purify and libraries like that, but not just JavaScript, a bunch of languages. There was one for Java, and I believe he did it for HTML Server Sanitizer in Ruby as well. And he just, I think he had a computer running those things, and he just let it go for a week and a half or something, and then he gets a notification, and then, oh, this thing is not sanitized and he has like the most massive HTML payload and then he works it and figures out what's the minimal thing and the sanitizer reads, parses the HTML and thinks, I don't know, this is a list with an embedded comment or whatever, but the browser parses that and actually does not parse in the same order and sees a script tag instead. And So that was supposed to be text, but it is actually parsed as a tag. So, so that sort of stuff can happen. And so even sanitizers, I mean, at some point you have to kind of trust someone, but if we can even the sandbox at this point, if you want to bypass that, you need like a bug in the browser that way those do exist, but we're really making it so much more difficult. And also when there's a bug in the HTML sanitizer, we have to update a library and ship a new release. When there's a bug in the browser, which is one, very rare, and two, the browser's updated, everyone's browser updates automatically and we don't have to ship a new release. So there, there's that aspect as well. Wow. That's, that's fascinating. That's That's, I know that happens and it always, it always scares me when I realize the arms race that security is. And then when you have the robots pointing at each other and just going on to infinitum of, that's not a word. Oh yeah. Fuzzing. Fuzzing is, uh, that's limitless. Yeah. That's absolutely wild. I, I do like the idea. And I think generally as a culture, bringing this back to code review of Being defensive sounds like a really necessary security tactic of like, just knowing even this, this works today, but we just also don't know like issues it may have in the future or now. So the, whatever steps we can take to limit the blast radius, but when things go wrong is a really good culture we need to. Promoting and asking us questions. Assume there will be a vulnerability. Yeah. And how do we prepare for that? Yeah, that's cool. Um, thanks, thanks for letting me, uh, poke at you so much and getting you to spill your security guts knowledge at the table. Um, yeah. Is there anything else that we wanted to, to, to dive into here? I guess there's a server-side equivalent to those sandbox mechanisms. It's so much more complicated, but like when there's something we don't trust, and that's something we're trying to look into for— we thought about that when we ran exiftool on our images that are uploaded and stuff like that. You can— these are words I never pronounce and only read, but you know, the change root tool, chroot. You can kind of change— you could execute— you move— you copy the executable in a place and you create a user that has only access to, I don't know, it's like some sort of directory inside your, your temp files or whatever. So if there's ever an exploit in that and they get file and command execution on the system, they are running as a user that has access to nothing. Sort of like something in a container, like our runners. Like, you have command execution by design on our runners, and this is not a security issue. So because of the way it's designed. So some of our actions, once again, where we process user input, when we process uploads, when we process project imports, where we had a lot of security issues, if those could happen inside an environment that we don't care if it's compromised, basically, that's really, and this makes the architecture a lot harder, especially with our monolith. This is where kind of microservices or whatever you want to call them shine, I guess. It's easy to just put that workflow inside of another machine and there we go. Like we don't compromise our host. But yeah, this is, this is the iframe sandbox of the service. Right. That's interesting. Yeah, it makes sense from a microservices perspective, and I can see that being really challenging from the monolithic perspective. Of having to do like user organization of, uh, but that's interesting. Um, and that makes sense though. Uh, my, the microservice approach sounds easy, sounds way easier than spinning up processes for some reason. Like even though there's probably a lot more going on, it sounds easier than spinning off processes. Yeah, yeah, that's funny. Um, cool. Well, for the last bit, uh, we usually pair up on an MR review, but we only have like 10 minutes left. Does anyone have like a really small MR that, or something of that nature that they'd wanna want to present to the offering of the, the code review gods? I'm gonna take that as a maybe next time. Cool. Well, this was such a fascinating discussion. I added a link to a, a presentation in the, the agenda. Awesome. Great. Highly recommend watching it. It, yeah, it will open your eyes if you're not familiar with that. Cool. Yeah. So this is, uh, I'll add this link also to the, um, the recording description, but this is such a fascinating discussion. I think security is such a great, important— these quality attributes are hopefully the things we're talking about in code review, at least in a collaborative way of like how we're going to maintain this in the long run. What's the performance of this going to be like in the long run? And security is a big one as well that I think for all code reviewers, hopefully a big takeaway isn't just that we hyperfocus on the functional. Bit of what we're looking at, but we have to look at all the quality attributes here. And security is a, security and performance tend to be at odds with all sorts of other quality attributes. Cool. Well, thanks. Appreciate, appreciate you hopping on and contributing so much to the conversation, Dominique, and everybody else. I will bid you all adieu and have a great rest of the day. Adios."
+}

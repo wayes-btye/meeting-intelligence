@@ -77,6 +77,7 @@ export interface MeetingDetail {
   summary: string | null;
   chunks: SourceChunk[];
   extracted_items: ExtractedItem[];
+  chunking_strategy?: string | null;
 }
 
 export interface ImageSummaryResponse {

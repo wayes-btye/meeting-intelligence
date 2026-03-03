@@ -36,7 +36,9 @@ build/
 data/meetingbank/
 
 # Large test audio files (transcripts kept, raw audio excluded)
+# Exception: one small MP3 committed for demo/testing purposes
 tests/data/*.mp3
+!tests/data/gitlab-sec-growth-datascience-2022-09-14.mp3
 tests/data/*.wav
 tests/data/*.m4a
 

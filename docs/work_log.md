@@ -253,3 +253,52 @@
 - Clean test meetings from live Supabase; load 10 MeetingBank meetings for demo corpus
 **Decisions:**
 - MP3 test file excluded from git (26MB); JSON + TXT transcripts committed as evidence for #63
+
+### [2026-03-02T00:00:00Z] — Session: Per-user data isolation planning
+**Focus:** Replace project namespacing (#45) with proper per-user isolation (#71)
+**Done:**
+- Confirmed DB state: 1 migration applied (initial schema), 10 meetings, 2 auth users (reviewer logged in once on Feb 23, no activity since)
+- Closed issue #45 (project namespacing) — superseded; no worktree existed
+- Created issue #71 (per-user isolation via JWT threading) with full implementation spec
+- Created `docs/worktrees/PLANNED_wt16-issue-71.md`; updated CLAUDE.md port table
+**Next:**
+- Create WT16 for issue #71 and begin implementation
+**Decisions:**
+- Application-layer filtering (not RLS) — FastAPI uses service key, extract user_id from JWT and filter queries; simpler with current arch
+
+### [2026-03-02T12:00:00Z] — Task: Implement per-user data isolation (issue #71, WT16)
+**Focus:** Thread JWT auth through all FastAPI endpoints and frontend API client
+**Done:**
+- Created `src/api/auth.py` (JWT dependency), updated all 3 route files + search + pipeline + storage to filter/store user_id
+- Frontend `apiFetch` now sends `Authorization: Bearer <token>` on every call
+- Migration file written (`20260302000000_add_user_id_to_meetings.sql`), NOT applied; PyJWT added to deps
+- 136 tests pass, ruff clean, mypy clean, `npm run build` clean; PR #72 opened
+**Next:**
+- User reviews and merges PR #72
+- Apply migration from main workspace: `supabase db push --linked`
+- Set SUPABASE_JWT_SECRET in Cloud Run + Vercel env vars
+**Decisions:**
+- 401 for invalid token; 422 for missing header (FastAPI default for missing required Header param); 404 (not 403) for ownership mismatch to avoid existence probing
+
+### [2026-03-02T01:00:00Z] — Task: Implement per-user data isolation (Issue #71)
+**Focus:** JWT-based user scoping — each account sees only their own meetings
+**Done:**
+- WT16 created (`feat/71-per-user-isolation`); full implementation: migration file, `src/api/auth.py` JWT dependency, user_id threaded through ingest/meetings/query/search, frontend Authorization header
+- 136 tests pass, ruff + mypy clean, npm build clean; PR #72 opened
+**Next:**
+- Apply migration from main workspace (`supabase db push --linked`)
+- Set `SUPABASE_JWT_SECRET` in Cloud Run + Vercel env vars before feature works in production
+**Decisions:**
+- Application-layer filtering (not RLS) — service key + Python-side user_id filter; simpler with current arch
+
+### [2026-03-03T00:00:00Z] — Task: Merge PR #72 — per-user data isolation
+**Focus:** Post-merge cleanup after PR #72 merged to main
+**Done:**
+- JWKS auth fixed (Supabase had migrated to ES256); migration applied; PR review feedback actioned (test naming, load_meetingbank.py user_id arg)
+- PR #72 merged; `git pull` fast-forwarded main; WT16 context renamed to MERGED_
+- Cloud Build will auto-deploy to Cloud Run
+**Next:**
+- Manual verify on production: reviewer@example.com sees 10 meetings; wayes.chawdoury@gmail.com sees empty list
+- Issue #48 (chunking_strategy column) migration still pending
+**Decisions:**
+- No new env vars needed in Cloud Run/Vercel — JWKS approach derives URL from SUPABASE_URL already set

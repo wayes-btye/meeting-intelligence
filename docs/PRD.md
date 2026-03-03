@@ -81,209 +81,250 @@ The choice to build this over the other options (code documentation assistant, c
 
 ### 4.1 Ingestion
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F01 | Accept plain text transcript files (.txt) with speaker labels | Must | ✅ Done |
-| F02 | Accept WebVTT format (.vtt) with timestamps | Must | ✅ Done |
-| F03 | Accept AssemblyAI JSON format with speaker diarization | Must | ✅ Done |
-| F04 | Accept MeetingBank JSON format | Must | ✅ Done |
-| F05 | Transcribe audio files (.mp3, .wav, .m4a) via AssemblyAI | Should | ⚠️ Clean error — binary input now returns 400 with clear message (PR #36); full transcription flow deferred |
-| F06 | Parse and normalise all formats to a uniform `TranscriptSegment` structure | Must | ✅ Done |
-| F07 | Extract meeting-level metadata (title, speakers, duration) on ingest | Must | ✅ Done |
+
+| ID  | Requirement                                                                | Priority | Phase 1 Status                                                                                              |
+| --- | -------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------------------------------- |
+| F01 | Accept plain text transcript files (.txt) with speaker labels              | Must     | ✅ Done                                                                                                      |
+| F02 | Accept WebVTT format (.vtt) with timestamps                                | Must     | ✅ Done                                                                                                      |
+| F03 | Accept AssemblyAI JSON format with speaker diarization                     | Must     | ✅ Done                                                                                                      |
+| F04 | Accept MeetingBank JSON format                                             | Must     | ✅ Done                                                                                                      |
+| F05 | Transcribe audio files (.mp3, .wav, .m4a) via AssemblyAI                   | Should   | ⚠️ Clean error — binary input now returns 400 with clear message (PR #36); full transcription flow deferred |
+| F06 | Parse and normalise all formats to a uniform `TranscriptSegment` structure | Must     | ✅ Done                                                                                                      |
+| F07 | Extract meeting-level metadata (title, speakers, duration) on ingest       | Must     | ✅ Done                                                                                                      |
+
 
 **Note on F05:** The `assemblyai` package is a dependency and AssemblyAI is configured, but the current ingest endpoint calls `.decode("utf-8")` on binary file content, crashing immediately for audio. Two options are being evaluated: implement the transcription flow properly, or remove audio file types from the UI and document this as a roadmap item. Either is preferable to the current silent crash.
 
 ### 4.2 Chunking
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F08 | Naive fixed-size chunking with configurable token window and overlap | Must | ✅ Done |
-| F09 | Speaker-turn chunking: one chunk per continuous speaker segment, capped at a configurable max | Must | ✅ Done |
-| F10 | All chunks preserve speaker label, timestamp range, meeting reference, and chunk index | Must | ✅ Done |
-| F11 | Chunking strategy configurable at ingest time via `PipelineConfig` | Must | ✅ Done |
+
+| ID  | Requirement                                                                                   | Priority | Phase 1 Status |
+| --- | --------------------------------------------------------------------------------------------- | -------- | -------------- |
+| F08 | Naive fixed-size chunking with configurable token window and overlap                          | Must     | ✅ Done         |
+| F09 | Speaker-turn chunking: one chunk per continuous speaker segment, capped at a configurable max | Must     | ✅ Done         |
+| F10 | All chunks preserve speaker label, timestamp range, meeting reference, and chunk index        | Must     | ✅ Done         |
+| F11 | Chunking strategy configurable at ingest time via `PipelineConfig`                            | Must     | ✅ Done         |
+
 
 ### 4.3 Embedding and Storage
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F12 | Embed chunks using OpenAI `text-embedding-3-small` (1536 dimensions) | Must | ✅ Done |
-| F13 | Store embeddings in Supabase pgvector with HNSW index for fast cosine search | Must | ✅ Done |
-| F14 | Maintain a full-text search (GIN/tsvector) index alongside the vector index | Must | ✅ Done |
-| F15 | Track which embedding model produced each chunk's vector | Should | 🔲 Planned — Issue #21 |
-| F16 | Support configurable embedding model via LiteLLM abstraction | Should | 🔲 Planned — Issue #21 |
+
+| ID  | Requirement                                                                  | Priority | Phase 1 Status         |
+| --- | ---------------------------------------------------------------------------- | -------- | ---------------------- |
+| F12 | Embed chunks using OpenAI `text-embedding-3-small` (1536 dimensions)         | Must     | ✅ Done                 |
+| F13 | Store embeddings in Supabase pgvector with HNSW index for fast cosine search | Must     | ✅ Done                 |
+| F14 | Maintain a full-text search (GIN/tsvector) index alongside the vector index  | Must     | ✅ Done                 |
+| F15 | Track which embedding model produced each chunk's vector                     | Should   | 🔲 Planned — Issue #21 |
+| F16 | Support configurable embedding model via LiteLLM abstraction                 | Should   | 🔲 Planned — Issue #21 |
+
 
 ### 4.4 Retrieval
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F17 | Semantic retrieval using vector cosine similarity | Must | ✅ Done |
-| F18 | Hybrid retrieval: vector similarity + full-text scoring, combined with configurable weights | Must | ✅ Done |
-| F19 | Filter retrieval by meeting ID, speaker label, or date range | Should | ✅ Done |
-| F20 | Return similarity scores with each retrieved chunk | Must | ✅ Done |
-| F21 | Configurable top-K retrieval count | Should | ✅ Done |
-| F22 | Cross-encoder reranking as optional post-retrieval stage | Could | 🔲 Not started — documented in architecture |
+
+| ID  | Requirement                                                                                 | Priority | Phase 1 Status                              |
+| --- | ------------------------------------------------------------------------------------------- | -------- | ------------------------------------------- |
+| F17 | Semantic retrieval using vector cosine similarity                                           | Must     | ✅ Done                                      |
+| F18 | Hybrid retrieval: vector similarity + full-text scoring, combined with configurable weights | Must     | ✅ Done                                      |
+| F19 | Filter retrieval by meeting ID, speaker label, or date range                                | Should   | ✅ Done                                      |
+| F20 | Return similarity scores with each retrieved chunk                                          | Must     | ✅ Done                                      |
+| F21 | Configurable top-K retrieval count                                                          | Should   | ✅ Done                                      |
+| F22 | Cross-encoder reranking as optional post-retrieval stage                                    | Could    | 🔲 Not started — documented in architecture |
+
 
 ### 4.5 Query Routing
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F23 | Detect whether a query is structured ("list all action items") vs open-ended ("what was discussed about X") | Must | ✅ Done |
-| F24 | Route structured queries to direct database lookup — not through RAG | Must | ✅ Done |
-| F25 | Route open-ended queries through the full RAG retrieval and generation pipeline | Must | ✅ Done |
+
+| ID  | Requirement                                                                                                 | Priority | Phase 1 Status |
+| --- | ----------------------------------------------------------------------------------------------------------- | -------- | -------------- |
+| F23 | Detect whether a query is structured ("list all action items") vs open-ended ("what was discussed about X") | Must     | ✅ Done         |
+| F24 | Route structured queries to direct database lookup — not through RAG                                        | Must     | ✅ Done         |
+| F25 | Route open-ended queries through the full RAG retrieval and generation pipeline                             | Must     | ✅ Done         |
+
 
 **Design note on F23–F25:** This is one of the more important architectural decisions in the system. It demonstrates understanding that RAG is not universally the right tool. Structured queries for known entities (action items with assignees, decisions with dates) are better served by direct SQL than by probabilistic retrieval. The router makes this distinction explicit rather than routing everything through the vector pipeline.
 
 ### 4.6 Generation
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F26 | Generate answers using Claude with retrieved context injected | Must | ✅ Done |
-| F27 | Include source attribution in every answer (speaker, timestamp, meeting) | Must | ✅ Done |
-| F28 | Configurable system prompt for answer style and guardrails | Must | ✅ Done |
-| F29 | Handle queries that span multiple meetings | Should | ✅ Done |
-| F30 | Handle no-results queries gracefully — decline rather than hallucinate | Must | ✅ Done |
-| F31 | Configurable LLM model via `PipelineConfig` (LiteLLM abstraction) | Should | 🔲 Planned — Issue #20 |
+
+| ID  | Requirement                                                              | Priority | Phase 1 Status         |
+| --- | ------------------------------------------------------------------------ | -------- | ---------------------- |
+| F26 | Generate answers using Claude with retrieved context injected            | Must     | ✅ Done                 |
+| F27 | Include source attribution in every answer (speaker, timestamp, meeting) | Must     | ✅ Done                 |
+| F28 | Configurable system prompt for answer style and guardrails               | Must     | ✅ Done                 |
+| F29 | Handle queries that span multiple meetings                               | Should   | ✅ Done                 |
+| F30 | Handle no-results queries gracefully — decline rather than hallucinate   | Must     | ✅ Done                 |
+| F31 | Configurable LLM model via `PipelineConfig` (LiteLLM abstraction)        | Should   | 🔲 Planned — Issue #20 |
+
 
 ### 4.7 Structured Extraction
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F32 | Extract action items from a meeting (who, what, target date) | Should | ✅ Done |
-| F33 | Extract key decisions from a meeting | Should | ✅ Done |
-| F34 | Extract key topics discussed | Should | ✅ Done |
-| F35 | Extraction uses the full transcript as context — direct LLM call, not RAG | Must | ✅ Done |
-| F36 | Extracted items stored in database | Must | ✅ Done |
-| F37 | Extracted items surfaced in the meeting detail view | Should | ⚠️ Partial — DB storage works; UI field name mismatches prevent display (Issue #24) |
+
+| ID  | Requirement                                                               | Priority | Phase 1 Status                                                                      |
+| --- | ------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| F32 | Extract action items from a meeting (who, what, target date)              | Should   | ✅ Done                                                                              |
+| F33 | Extract key decisions from a meeting                                      | Should   | ✅ Done                                                                              |
+| F34 | Extract key topics discussed                                              | Should   | ✅ Done                                                                              |
+| F35 | Extraction uses the full transcript as context — direct LLM call, not RAG | Must     | ✅ Done                                                                              |
+| F36 | Extracted items stored in database                                        | Must     | ✅ Done                                                                              |
+| F37 | Extracted items surfaced in the meeting detail view                       | Should   | ⚠️ Partial — DB storage works; UI field name mismatches prevent display (Issue #24) |
+
 
 **Design note on F35:** Extraction from a single known document is better handled by direct LLM call than by retrieval. The transcript is small enough to fit in context, and you want the model to see the complete picture. This is an explicit design choice, not a shortcut — and it's in the same category as the query routing decision above.
 
 ### 4.8 Evaluation
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F38 | Auto-generate Q&A test set from MeetingBank reference summaries using Claude | Must | ✅ Done — generator implemented |
-| F39 | Evaluate answer quality using Claude-as-judge: faithfulness, answer relevancy, context precision/recall | Must | ✅ Done — metrics implemented |
-| F40 | Strategy comparison: run evaluation across all chunking × retrieval combinations | Must | ✅ Done — comparison logic implemented |
-| F41 | Cross-check: run the same questions through RAG and full-transcript context-stuffing, compare results | Should | ✅ Done — cross-check implemented |
-| F42 | Functional evaluation runner that can be executed end-to-end | Must | ✅ Done — entry point added + test coverage (PR #37) |
-| F43 | Actual evaluation results saved to `reports/` | Must | 🔲 Not yet run — framework ready, requires live API keys |
+
+| ID  | Requirement                                                                                             | Priority | Phase 1 Status                                           |
+| --- | ------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------- |
+| F38 | Auto-generate Q&A test set from MeetingBank reference summaries using Claude                            | Must     | ✅ Done — generator implemented                           |
+| F39 | Evaluate answer quality using Claude-as-judge: faithfulness, answer relevancy, context precision/recall | Must     | ✅ Done — metrics implemented                             |
+| F40 | Strategy comparison: run evaluation across all chunking × retrieval combinations                        | Must     | ✅ Done — comparison logic implemented                    |
+| F41 | Cross-check: run the same questions through RAG and full-transcript context-stuffing, compare results   | Should   | ✅ Done — cross-check implemented                         |
+| F42 | Functional evaluation runner that can be executed end-to-end                                            | Must     | ✅ Done — entry point added + test coverage (PR #37)      |
+| F43 | Actual evaluation results saved to `reports/`                                                           | Must     | 🔲 Not yet run — framework ready, requires live API keys |
+
 
 **Note on evaluation approach:** The implementation uses Claude-as-judge rather than the RAGAS or DeepEval libraries. This was a deliberate choice: Claude-as-judge is more flexible for domain-specific quality criteria, requires no additional frameworks, and produces more interpretable output. The README has been corrected to reflect this (previously incorrectly stated "RAGAS + DeepEval metrics" — fixed in doc cleanup pass).
 
 ### 4.9 API
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F44 | `POST /ingest` — upload and process a transcript file | Must | ✅ Done |
-| F45 | `POST /query` — ask a natural language question, get attributed answer | Must | ✅ Done |
-| F46 | `GET /meetings` — list all ingested meetings | Must | ✅ Done |
-| F47 | `GET /meetings/{id}` — meeting detail including extracted items | Should | ✅ Done |
-| F48 | `POST /meetings/{id}/extract` — run structured extraction on a meeting | Should | ✅ Done |
-| F49 | Duplicate GET `/meetings/{id}/extract` endpoint removed | Must | ✅ Done — removed in PR #36 |
-| F50 | Strategy configurable per request via request body | Should | ✅ Done |
-| F51 | OpenAPI docs available at `/docs` | Should | ✅ Done (FastAPI default) |
+
+| ID  | Requirement                                                            | Priority | Phase 1 Status             |
+| --- | ---------------------------------------------------------------------- | -------- | -------------------------- |
+| F44 | `POST /ingest` — upload and process a transcript file                  | Must     | ✅ Done                     |
+| F45 | `POST /query` — ask a natural language question, get attributed answer | Must     | ✅ Done                     |
+| F46 | `GET /meetings` — list all ingested meetings                           | Must     | ✅ Done                     |
+| F47 | `GET /meetings/{id}` — meeting detail including extracted items        | Should   | ✅ Done                     |
+| F48 | `POST /meetings/{id}/extract` — run structured extraction on a meeting | Should   | ✅ Done                     |
+| F49 | Duplicate GET `/meetings/{id}/extract` endpoint removed                | Must     | ✅ Done — removed in PR #36 |
+| F50 | Strategy configurable per request via request body                     | Should   | ✅ Done                     |
+| F51 | OpenAPI docs available at `/docs`                                      | Should   | ✅ Done (FastAPI default)   |
+
 
 ### 4.10 UI
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F52 | Upload tab: transcript file upload with progress feedback | Must | ✅ Done |
-| F53 | Chat tab: question input, answer display with source citations | Must | ✅ Done |
-| F54 | Meetings browser: list meetings, click to see detail and extracted items | Should | ⚠️ List works; detail view broken due to field name mismatches (Issue #24) |
-| F55 | Strategy selector in sidebar: toggle chunking and retrieval strategies | Should | ✅ Done |
-| F56 | Audio upload flow with AssemblyAI transcription | Should | ❌ Broken — crashes on binary input (Issue #22) |
+
+| ID  | Requirement                                                              | Priority | Phase 1 Status                                                             |
+| --- | ------------------------------------------------------------------------ | -------- | -------------------------------------------------------------------------- |
+| F52 | Upload tab: transcript file upload with progress feedback                | Must     | ✅ Done                                                                     |
+| F53 | Chat tab: question input, answer display with source citations           | Must     | ✅ Done                                                                     |
+| F54 | Meetings browser: list meetings, click to see detail and extracted items | Should   | ⚠️ List works; detail view broken due to field name mismatches (Issue #24) |
+| F55 | Strategy selector in sidebar: toggle chunking and retrieval strategies   | Should   | ✅ Done                                                                     |
+| F56 | Audio upload flow with AssemblyAI transcription                          | Should   | ❌ Broken — crashes on binary input (Issue #22)                             |
+
 
 ### 4.11 Infrastructure
 
-| ID | Requirement | Priority | Phase 1 Status |
-|----|-------------|----------|----------------|
-| F57 | Docker Compose: single command brings up api + ui services | Must | ✅ Done |
-| F58 | GitHub Actions CI: runs ruff, mypy, pytest on every push | Must | ✅ Done — added in PR #28 (Issue #25) |
-| F59 | Pre-commit hooks: ruff format + ruff check | Should | ✅ Done |
-| F60 | MeetingBank data loadable via `scripts/load_meetingbank.py` | Must | ⚠️ Script done; 30 JSON files downloaded; not yet loaded into live Supabase (Issue #26) |
-| F61 | Type checking passes cleanly (`mypy src/`) | Must | ✅ Done — all 218 errors resolved (PR #40) |
+
+| ID  | Requirement                                                 | Priority | Phase 1 Status                                                                          |
+| --- | ----------------------------------------------------------- | -------- | --------------------------------------------------------------------------------------- |
+| F57 | Docker Compose: single command brings up api + ui services  | Must     | ✅ Done                                                                                  |
+| F58 | GitHub Actions CI: runs ruff, mypy, pytest on every push    | Must     | ✅ Done — added in PR #28 (Issue #25)                                                    |
+| F59 | Pre-commit hooks: ruff format + ruff check                  | Should   | ✅ Done                                                                                  |
+| F60 | MeetingBank data loadable via `scripts/load_meetingbank.py` | Must     | ⚠️ Script done; 30 JSON files downloaded; not yet loaded into live Supabase (Issue #26) |
+| F61 | Type checking passes cleanly (`mypy src/`)                  | Must     | ✅ Done — all 218 errors resolved (PR #40)                                               |
+
 
 ### 4.12 Ingestion — Bulk and Enterprise Formats
 
-| ID | Requirement | Priority | Phase 2 Status |
-|----|-------------|----------|----------------|
-| F62 | Zip file upload: ingest multiple transcripts in one upload, each as a separate meeting | Should | ✅ Done — PR #58 (Issue #34). Zip bomb protection included. |
-| F63 | Microsoft Teams VTT format: explicit parser support for `<v SpeakerName>` inline tag format; currently the VTT parser likely loses speaker labels from Teams exports | Must | ✅ Done — PR #58 (Issue #34). Teams VTT parser added to `parsers.py`. |
+
+| ID  | Requirement                                                                                                                                                          | Priority | Phase 2 Status                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------- |
+| F62 | Zip file upload: ingest multiple transcripts in one upload, each as a separate meeting                                                                               | Should   | ✅ Done — PR #58 (Issue #34). Zip bomb protection included.           |
+| F63 | Microsoft Teams VTT format: explicit parser support for `<v SpeakerName>` inline tag format; currently the VTT parser likely loses speaker labels from Teams exports | Must     | ✅ Done — PR #58 (Issue #34). Teams VTT parser added to `parsers.py`. |
+
 
 ### 4.13 Upload-time Visual Summary
 
-| ID | Requirement | Priority | Phase 2 Status |
-|----|-------------|----------|----------------|
-| F64 | On transcript upload, immediately display extracted action items/decisions/topics (via direct Claude call) — before RAG ingestion completes | Should | ✅ Done — extraction displayed on upload (PR #58 and prior) |
-| F64b | Upload-time visual summary image via Nano Banana Pro (Vertex AI Imagen 3) — speaker breakdown and topic visualisation | Should | ✅ Done — PR #62 (Issue #61). Vertex AI image generation implemented. |
+
+| ID   | Requirement                                                                                                                                 | Priority | Phase 2 Status                                                       |
+| ---- | ------------------------------------------------------------------------------------------------------------------------------------------- | -------- | -------------------------------------------------------------------- |
+| F64  | On transcript upload, immediately display extracted action items/decisions/topics (via direct Claude call) — before RAG ingestion completes | Should   | ✅ Done — extraction displayed on upload (PR #58 and prior)           |
+| F64b | Upload-time visual summary image via Nano Banana Pro (Vertex AI Imagen 3) — speaker breakdown and topic visualisation                       | Should   | ✅ Done — PR #62 (Issue #61). Vertex AI image generation implemented. |
+
 
 ### 4.14 Frontend and Deployment
 
-| ID | Requirement | Priority | Phase 2 Status |
-|----|-------------|----------|----------------|
-| F65 | React/Next.js frontend replacing Streamlit as the demo-facing UI; Streamlit retained as dev/debug tool | Should | ✅ Done — Next.js 14 App Router frontend deployed to Vercel (PR #38) |
-| F66 | Cloud deployment: FastAPI to Google Cloud Run; frontend to Vercel (once React is built); GitHub Actions deploy workflow | Should | ✅ Done — Cloud Run live, Vercel live, NEXT_PUBLIC_API_URL configured (PRs #50, #51) |
+
+| ID  | Requirement                                                                                                             | Priority | Phase 2 Status                                                                      |
+| --- | ----------------------------------------------------------------------------------------------------------------------- | -------- | ----------------------------------------------------------------------------------- |
+| F65 | React/Next.js frontend replacing Streamlit as the demo-facing UI; Streamlit retained as dev/debug tool                  | Should   | ✅ Done — Next.js 14 App Router frontend deployed to Vercel (PR #38)                 |
+| F66 | Cloud deployment: FastAPI to Google Cloud Run; frontend to Vercel (once React is built); GitHub Actions deploy workflow | Should   | ✅ Done — Cloud Run live, Vercel live, NEXT_PUBLIC_API_URL configured (PRs #50, #51) |
+
 
 ### 4.15 Test Coverage
 
-| ID | Requirement | Priority | Phase 2 Status |
-|----|-------------|----------|----------------|
-| F67 | Integration tests with live Supabase: vector search, hybrid search, storage (marked `@pytest.mark.expensive`) | Must | ✅ Done — live integration tests added (PR #37) |
-| F68 | End-to-end pipeline test: ingest real transcript → chunk → embed → store → query → verify answer contains expected content (marked `@pytest.mark.expensive`) | Must | ✅ Done — end-to-end test added (PR #37) |
-| F69 | Real MeetingBank fixtures in `tests/fixtures/meetingbank/` for meaningful test assertions | Should | ✅ Done — MeetingBank fixtures added (PR #37) |
+
+| ID  | Requirement                                                                                                                                                  | Priority | Phase 2 Status                                 |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------ | -------- | ---------------------------------------------- |
+| F67 | Integration tests with live Supabase: vector search, hybrid search, storage (marked `@pytest.mark.expensive`)                                                | Must     | ✅ Done — live integration tests added (PR #37) |
+| F68 | End-to-end pipeline test: ingest real transcript → chunk → embed → store → query → verify answer contains expected content (marked `@pytest.mark.expensive`) | Must     | ✅ Done — end-to-end test added (PR #37)        |
+| F69 | Real MeetingBank fixtures in `tests/fixtures/meetingbank/` for meaningful test assertions                                                                    | Should   | ✅ Done — MeetingBank fixtures added (PR #37)   |
+
 
 ### 4.16 Authentication (Wave 3)
 
-| ID | Requirement | Priority | Phase 3 Status |
-|----|-------------|----------|----------------|
-| F70 | Email/password login via Supabase Auth — login page, session management, route protection | Must | ✅ Done — PR #55 (Issue #52) |
-| F71 | Next.js middleware redirecting unauthenticated users to `/login` | Must | ✅ Done — PR #55 (Issue #52) |
-| F72 | Logout button in nav — clears session and redirects to `/login` | Must | ✅ Done — PR #55 (Issue #52) |
+
+| ID  | Requirement                                                                               | Priority | Phase 3 Status              |
+| --- | ----------------------------------------------------------------------------------------- | -------- | --------------------------- |
+| F70 | Email/password login via Supabase Auth — login page, session management, route protection | Must     | ✅ Done — PR #55 (Issue #52) |
+| F71 | Next.js middleware redirecting unauthenticated users to `/login`                          | Must     | ✅ Done — PR #55 (Issue #52) |
+| F72 | Logout button in nav — clears session and redirects to `/login`                           | Must     | ✅ Done — PR #55 (Issue #52) |
+
 
 **Design note:** Auth is entirely client-side via Supabase Auth + `@supabase/ssr`. No backend changes. The FastAPI layer is unchanged — it does not validate tokens, as the prototype does not require API-level auth. Route protection lives in Next.js middleware.
 
 ### 4.17 Meeting Management UI (Wave 3)
 
-| ID | Requirement | Priority | Phase 3 Status |
-|----|-------------|----------|----------------|
-| F73 | `DELETE /api/meetings/{id}` — remove meeting and all associated chunks and extracted items | Must | ✅ Done — PR #56 (Issue #42) |
-| F74 | Delete button per meeting row in Meetings page — with AlertDialog confirmation before firing | Must | ✅ Done — PR #56 (Issue #42) |
-| F75 | Meeting title shown on source cards in chat — attribution visible when querying "All meetings" | Should | ✅ Done — PR #56 (Issue #43) |
-| F76 | `ChunkResult` model includes `meeting_title` field; populated by enrichment query in `search.py` | Should | ✅ Done — PR #56 (Issue #43) |
+
+| ID  | Requirement                                                                                      | Priority | Phase 3 Status              |
+| --- | ------------------------------------------------------------------------------------------------ | -------- | --------------------------- |
+| F73 | `DELETE /api/meetings/{id}` — remove meeting and all associated chunks and extracted items       | Must     | ✅ Done — PR #56 (Issue #42) |
+| F74 | Delete button per meeting row in Meetings page — with AlertDialog confirmation before firing     | Must     | ✅ Done — PR #56 (Issue #42) |
+| F75 | Meeting title shown on source cards in chat — attribution visible when querying "All meetings"   | Should   | ✅ Done — PR #56 (Issue #43) |
+| F76 | `ChunkResult` model includes `meeting_title` field; populated by enrichment query in `search.py` | Should   | ✅ Done — PR #56 (Issue #43) |
+
 
 ### 4.18 Frontend Polish (Wave 3)
 
-| ID | Requirement | Priority | Phase 3 Status |
-|----|-------------|----------|----------------|
-| F77 | Markdown rendering in chat answers — Claude's markdown (headers, bullets, bold) renders correctly using `react-markdown` + `@tailwindcss/typography` | Must | ✅ Done — PR #54 (Issue #41) |
-| F78 | Null speaker graceful fallback — source cards show "Unknown speaker" badge when `speaker` is null | Should | ✅ Done — PR #54 (Issue #44) |
-| F79 | Null `num_speakers` graceful fallback in Meetings list — shows "—" instead of empty/undefined | Should | ✅ Done — PR #54 (Issue #44) |
+
+| ID  | Requirement                                                                                                                                          | Priority | Phase 3 Status              |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------- | -------- | --------------------------- |
+| F77 | Markdown rendering in chat answers — Claude's markdown (headers, bullets, bold) renders correctly using `react-markdown` + `@tailwindcss/typography` | Must     | ✅ Done — PR #54 (Issue #41) |
+| F78 | Null speaker graceful fallback — source cards show "Unknown speaker" badge when `speaker` is null                                                    | Should   | ✅ Done — PR #54 (Issue #44) |
+| F79 | Null `num_speakers` graceful fallback in Meetings list — shows "—" instead of empty/undefined                                                        | Should   | ✅ Done — PR #54 (Issue #44) |
+
 
 ---
 
 ## 5. Non-Functional Requirements
 
 ### Reliability
+
 - The system produces consistent answers for the same query + strategy configuration
 - Retrieval degrades gracefully when no relevant context exists: the model says "I don't know from the provided transcripts" rather than fabricating an answer
 - External API calls (Claude, OpenAI, AssemblyAI, Supabase) all have error handling and surface failures clearly
 
 ### Observability
+
 - Every pipeline step logs timing information
 - Retrieval results include similarity scores in the API response
 - API errors return structured responses with enough detail to debug without log access
 
 ### Testability
+
 - Core pipeline logic (chunking, embedding, retrieval) is unit-testable without live API calls
 - Expensive API-calling tests marked `@pytest.mark.expensive` and excluded by default
 - 132 tests currently passing across unit and integration levels
 
 ### Portability
+
 - Environment variables control all external service configuration — no hardcoded values
 - `.env.example` documents every required key
 - `docker compose up` from a fresh clone is the intended setup path
 
 ### Maintainability
+
 - Type hints required throughout (mypy passing cleanly — all 218 pre-existing errors resolved in PR #40)
 - Ruff for linting and formatting (currently passing cleanly)
 - `CLAUDE.md` ensures any AI coding session understands the project constraints
@@ -342,6 +383,7 @@ Add an optional post-retrieval reranking step using a cross-encoder model (e.g.,
 ### P2.4 — Production Hardening for Enterprise Deployment
 
 For a deployment serving a life sciences team:
+
 - **Frontend:** Replace Streamlit with a proper frontend (React/Next.js or similar). Streamlit is a great prototyping tool and a poor production UI.
 - **Auth + data isolation:** JWT authentication with Supabase RLS policies. Each user or team should only see their own meeting data.
 - **Transcription:** Replace AssemblyAI with self-hosted WhisperX + pyannote for data residency. In pharma/healthcare, you cannot send meeting audio to a third-party SaaS without a DPA at minimum, and often without on-premise processing.
@@ -382,17 +424,20 @@ The current pipeline accepts uploaded text files. With thin adapters for Teams G
 
 ## 9. Open Questions and Decisions Log
 
-| Question | Decision | Date |
-|----------|----------|------|
-| Which assignment option to build? | Option 3 (Meeting Intelligence) — lower execution risk, explicitly rewards audio bonus, most applicable to Newpage's regulated industry clients | 2026-02-17 |
-| Use LangChain/LlamaIndex or direct SDKs? | Direct SDKs — want every pipeline step to be explicit code, not hidden in abstractions. Easier to explain, easier to extend, aligns with understanding what's happening under the hood | 2026-02-17 |
-| Which vector database? | Supabase pgvector — single database for vectors + metadata + full-text search. Hybrid search comes free with Postgres. No separate vector DB to manage. At production scale, would evaluate dedicated vector store. | 2026-02-17 |
-| Evaluation approach: library or Claude-as-judge? | Claude-as-judge — more flexible for domain-specific quality criteria, no additional dependencies, interpretable output. RAGAS/DeepEval would be appropriate for a longer-running project with more standardised benchmarks. | 2026-02-18 |
-| Context-stuffing vs RAG for single meetings? | Explicit cross-check evaluation addresses this. For a single meeting, context-stuffing is often better. The system makes this visible rather than hiding it. | 2026-02-18 |
-| Query routing: RAG for everything vs router? | Router — structured queries for known entities (action items, decisions) go directly to the database. More accurate, faster, and cheaper than running structured queries through a probabilistic retrieval pipeline. | 2026-02-18 |
-| Streamlit vs React for demo UI? | Keep Streamlit as dev/debug tool. React (Next.js) as the public-facing demo UI deployed to Vercel. FastAPI is API-only — frontend is a pure client with zero backend changes needed. | 2026-02-20 |
-| Zip upload for assessor convenience? | Add zip file upload supporting bulk ingestion of multiple transcripts. Assessors likely have a folder of Teams meeting exports — this removes friction from the demo. | 2026-02-20 |
-| Upload-time visual summary approach? | Run Claude extraction + Gemini visual generation immediately on upload, before RAG ingestion completes. Provides two distinct value propositions from one upload action. | 2026-02-20 |
-| Auth approach for frontend? | Supabase Auth with email/password, managed by `@supabase/ssr` in Next.js middleware. No backend changes — FastAPI remains unauthenticated at the API level for the prototype. Auth is a Next.js routing concern, not an API concern. | 2026-02-21 |
-| Cloud Run deployment strategy? | Cloud Run UI-based deploy (no gcloud CLI dependency) with GitHub Actions for CI. Frontend on Vercel with `NEXT_PUBLIC_API_URL` env var pointing to Cloud Run. No Docker changes needed — Cloud Run builds from the existing Dockerfile. | 2026-02-21 |
-| Meeting title in source cards — join in SQL or Python? | Python-side enrichment query (`_enrich_with_meeting_titles()`) — one extra DB query per search rather than modifying the Supabase RPC SQL function. Avoids touching the migration system. Acceptable at current scale. | 2026-02-21 |
+
+| Question                                               | Decision                                                                                                                                                                                                                                | Date       |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| Which assignment option to build?                      | Option 3 (Meeting Intelligence) — lower execution risk, explicitly rewards audio bonus, most applicable to Newpage's regulated industry clients                                                                                         | 2026-02-17 |
+| Use LangChain/LlamaIndex or direct SDKs?               | Direct SDKs — want every pipeline step to be explicit code, not hidden in abstractions. Easier to explain, easier to extend, aligns with understanding what's happening under the hood                                                  | 2026-02-17 |
+| Which vector database?                                 | Supabase pgvector — single database for vectors + metadata + full-text search. Hybrid search comes free with Postgres. No separate vector DB to manage. At production scale, would evaluate dedicated vector store.                     | 2026-02-17 |
+| Evaluation approach: library or Claude-as-judge?       | Claude-as-judge — more flexible for domain-specific quality criteria, no additional dependencies, interpretable output. RAGAS/DeepEval would be appropriate for a longer-running project with more standardised benchmarks.             | 2026-02-18 |
+| Context-stuffing vs RAG for single meetings?           | Explicit cross-check evaluation addresses this. For a single meeting, context-stuffing is often better. The system makes this visible rather than hiding it.                                                                            | 2026-02-18 |
+| Query routing: RAG for everything vs router?           | Router — structured queries for known entities (action items, decisions) go directly to the database. More accurate, faster, and cheaper than running structured queries through a probabilistic retrieval pipeline.                    | 2026-02-18 |
+| Streamlit vs React for demo UI?                        | Keep Streamlit as dev/debug tool. React (Next.js) as the public-facing demo UI deployed to Vercel. FastAPI is API-only — frontend is a pure client with zero backend changes needed.                                                    | 2026-02-20 |
+| Zip upload for assessor convenience?                   | Add zip file upload supporting bulk ingestion of multiple transcripts. Assessors likely have a folder of Teams meeting exports — this removes friction from the demo.                                                                   | 2026-02-20 |
+| Upload-time visual summary approach?                   | Run Claude extraction + Gemini visual generation immediately on upload, before RAG ingestion completes. Provides two distinct value propositions from one upload action.                                                                | 2026-02-20 |
+| Auth approach for frontend?                            | Supabase Auth with email/password, managed by `@supabase/ssr` in Next.js middleware. No backend changes — FastAPI remains unauthenticated at the API level for the prototype. Auth is a Next.js routing concern, not an API concern.    | 2026-02-21 |
+| Cloud Run deployment strategy?                         | Cloud Run UI-based deploy (no gcloud CLI dependency) with GitHub Actions for CI. Frontend on Vercel with `NEXT_PUBLIC_API_URL` env var pointing to Cloud Run. No Docker changes needed — Cloud Run builds from the existing Dockerfile. | 2026-02-21 |
+| Meeting title in source cards — join in SQL or Python? | Python-side enrichment query (`_enrich_with_meeting_titles()`) — one extra DB query per search rather than modifying the Supabase RPC SQL function. Avoids touching the migration system. Acceptable at current scale.                  | 2026-02-21 |
+
+

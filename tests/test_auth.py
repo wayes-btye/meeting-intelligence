@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Any
 from unittest.mock import MagicMock, patch
 
+import jwt
 import pytest
 from fastapi.testclient import TestClient
 
@@ -68,11 +69,10 @@ def test_unauthenticated_query_returns_401(real_auth_client: TestClient) -> None
 def test_invalid_bearer_token_returns_401(real_auth_client: TestClient) -> None:
     """A malformed JWT must return 401.
 
-    FastAPI validates the header type but the JWT decode will fail and
-    get_current_user_id raises HTTPException(401).
+    Patches the JWKS client to raise PyJWKClientError (as it would for an
+    unrecognised key ID or malformed token) — no real JWKS network call. (#71)
     """
-    with patch("src.api.auth.settings") as mock_settings:
-        mock_settings.supabase_jwt_secret = "test-secret"
+    with patch("src.api.auth._jwks_client.get_signing_key_from_jwt", side_effect=jwt.PyJWTError("bad token")):
         response = real_auth_client.get(
             "/api/meetings",
             headers={"Authorization": "Bearer not-a-valid-jwt"},
@@ -200,20 +200,20 @@ def test_get_meeting_wrong_owner_returns_404() -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_unconfigured_jwt_secret_returns_503(real_auth_client: TestClient) -> None:
-    """If SUPABASE_JWT_SECRET is empty, auth must return 503, not 401 or 500.
+def test_jwks_fetch_failure_returns_401(real_auth_client: TestClient) -> None:
+    """A JWKS network failure must return 401, not 500.
 
-    An empty secret would allow PyJWT to accept HS256 tokens signed with "".
-    The fail-closed guard must fire before jwt.decode is called. (#71)
+    If Supabase's JWKS endpoint is unreachable (e.g. network error or key not
+    found), PyJWKClient raises PyJWKError which is a subclass of PyJWTError.
+    The except clause in get_current_user_id must catch it and return 401. (#71)
     """
-    with patch("src.api.auth.settings") as mock_settings:
-        mock_settings.supabase_jwt_secret = ""
+    with patch("src.api.auth._jwks_client.get_signing_key_from_jwt", side_effect=jwt.PyJWTError("jwks unavailable")):
         response = real_auth_client.get(
             "/api/meetings",
             headers={"Authorization": "Bearer some.jwt.token"},
         )
-    assert response.status_code == 503, (
-        f"Expected 503 for unconfigured secret, got {response.status_code}: {response.text}"
+    assert response.status_code == 401, (
+        f"Expected 401 for JWKS failure, got {response.status_code}: {response.text}"
     )
 
 

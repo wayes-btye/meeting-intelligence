@@ -30,3 +30,7 @@ class PipelineConfig:
 
     chunking_strategy: ChunkingStrategy = ChunkingStrategy.SPEAKER_TURN
     retrieval_strategy: RetrievalStrategy = RetrievalStrategy.HYBRID
+    # Issue #66: when True, each chunk is contextualised with a Claude-generated
+    # 1-2 sentence summary before embedding (contextual retrieval).
+    # Off by default to preserve existing behaviour and avoid extra API cost.
+    contextual_retrieval: bool = False

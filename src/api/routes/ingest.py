@@ -91,6 +91,7 @@ async def ingest(
     file: Annotated[UploadFile, File(...)],
     title: Annotated[str, Form()] = "Untitled Meeting",
     chunking_strategy: Annotated[str, Form()] = "speaker_turn",
+    contextual_retrieval: Annotated[bool, Form()] = False,
 ) -> IngestResponse | BatchIngestResponse:
     """Upload a transcript file and run the ingestion pipeline.
 
@@ -107,6 +108,8 @@ async def ingest(
       without a key.
 
     Issue #34: zip bulk upload + Teams VTT support.
+    Issue #66: set ``contextual_retrieval=true`` to prepend Claude-generated context to each
+    chunk before embedding. Improves retrieval quality; adds ~1 Haiku API call per chunk.
     """
     # Enforce file size limit
     raw = await file.read()
@@ -150,7 +153,14 @@ async def ingest(
         format_map = {"vtt": "vtt", "txt": "text", "json": "json"}
         transcript_format = format_map.get(ext, "text")
 
-    meeting_id = ingest_transcript(content, transcript_format, title, strategy, user_id=user_id)
+    meeting_id = ingest_transcript(
+        content,
+        transcript_format,
+        title,
+        strategy,
+        user_id=user_id,
+        contextual_retrieval=contextual_retrieval,
+    )
 
     # Get chunk count
     client = get_supabase_client()

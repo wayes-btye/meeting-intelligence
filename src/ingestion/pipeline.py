@@ -5,7 +5,7 @@ from __future__ import annotations
 import logging
 
 from src.ingestion.chunking import naive_chunk, speaker_turn_chunk
-from src.ingestion.embeddings import embed_chunks
+from src.ingestion.embeddings import embed_chunks, embed_chunks_with_context
 from src.ingestion.parsers import parse_transcript
 from src.ingestion.storage import get_supabase_client, store_chunks, store_meeting
 from src.pipeline_config import ChunkingStrategy
@@ -20,6 +20,7 @@ def ingest_transcript(
     chunking_strategy: str | ChunkingStrategy = ChunkingStrategy.SPEAKER_TURN,
     extract: bool = False,
     user_id: str | None = None,
+    contextual_retrieval: bool = False,
 ) -> str:
     """Full ingestion pipeline: parse -> chunk -> embed -> store (-> extract).
 
@@ -32,6 +33,9 @@ def ingest_transcript(
         user_id: Authenticated user's UUID. Stored on the meeting row for
             per-user isolation. If ``None``, the row is created without an
             owner (legacy behaviour, will be filtered out after migration).
+        contextual_retrieval: If True, each chunk is enriched with a
+            Claude-generated 1-2 sentence context before embedding (Issue #66).
+            Adds one Claude Haiku API call per chunk at ingest time.
 
     Returns:
         The newly created meeting ID.
@@ -50,7 +54,13 @@ def ingest_transcript(
         chunks = speaker_turn_chunk(segments)
 
     # 3. Embed
-    chunks_with_embeddings = embed_chunks(chunks)
+    # Issue #66: contextual retrieval enriches each chunk with a Claude-generated
+    # context sentence before embedding, improving retrieval quality at the cost
+    # of one extra Haiku API call per chunk.
+    if contextual_retrieval:
+        chunks_with_embeddings = embed_chunks_with_context(chunks, title)
+    else:
+        chunks_with_embeddings = embed_chunks(chunks)
 
     # 4. Store
     client = get_supabase_client()

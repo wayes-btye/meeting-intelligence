@@ -1,5 +1,8 @@
 """Quick script to transcribe a sample audio file via AssemblyAI and save output.
 
+NOT a pytest test — run manually only. Consumes AssemblyAI credits and takes
+several minutes per file. Do not add to CI/CD.
+
 Usage:
     python tests/transcribe_sample.py
 
